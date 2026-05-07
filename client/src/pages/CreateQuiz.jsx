@@ -37,12 +37,12 @@ export default function CreateQuiz() {
   };
 
   return (
-    <main style={{ flex: 1 }}>
+    <main style={{ flex: 1, backgroundColor: '#ffffff' }}>
       <div className="container" style={{ padding: '2rem 0' }}>
-        <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{ marginBottom: '2rem' }}>
-            <h1>Create New Quiz</h1>
-            <p style={{ color: 'var(--text-muted)' }}>Set up a new timed MCQ quiz</p>
+            <h1 style={{ marginBottom: '0.25rem' }}>Create New Quiz</h1>
+            <p style={{ color: 'var(--text-muted)', margin: 0 }}>Set up a new timed MCQ quiz</p>
           </div>
 
           {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -55,11 +55,22 @@ export default function CreateQuiz() {
                   <input
                     type="text"
                     name="title"
-                    className="form-control"
+                    className="auth-input"
                     placeholder="e.g. Introduction to Mathematics"
                     value={formData.title}
                     onChange={handleChange}
                     required
+                    style={{ 
+                      width: '100%',
+                      padding: '0.65rem 1rem',
+                      background: '#f3f4f6',
+                      border: '1px solid transparent',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem',
+                      color: '#111827',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
                   />
                 </div>
 
@@ -67,11 +78,24 @@ export default function CreateQuiz() {
                   <label className="form-label">Description</label>
                   <textarea
                     name="description"
-                    className="form-control"
+                    className="auth-input"
                     rows="3"
                     placeholder="Brief description of the quiz..."
                     value={formData.description}
                     onChange={handleChange}
+                    style={{ 
+                      width: '100%',
+                      padding: '0.65rem 1rem',
+                      background: '#f3f4f6',
+                      border: '1px solid transparent',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem',
+                      color: '#111827',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      resize: 'vertical',
+                      fontFamily: 'inherit'
+                    }}
                   ></textarea>
                 </div>
 
@@ -80,13 +104,23 @@ export default function CreateQuiz() {
                   <input
                     type="number"
                     name="timeLimit"
-                    className="form-control"
+                    className="auth-input"
                     min="1"
                     max="300"
                     placeholder="e.g. 30"
                     value={formData.timeLimit}
                     onChange={handleChange}
                     required
+                    style={{
+                      padding: '0.65rem 1rem',
+                      background: '#f3f4f6',
+                      border: '1px solid transparent',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem',
+                      color: '#111827',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
                   />
                   <div className="form-text">Students will have this many minutes to complete the quiz.</div>
                 </div>
@@ -96,6 +130,8 @@ export default function CreateQuiz() {
                     type="submit"
                     className="btn btn-primary"
                     disabled={loading}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}
                   >
                     {loading ? 'Creating...' : 'Create Quiz'}
                   </button>

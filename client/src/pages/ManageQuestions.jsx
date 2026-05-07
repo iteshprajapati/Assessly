@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { questionAPI, quizAPI } from '../services/api';
 import Alert from '../components/Alert';
+import { Edit2, Trash2, X } from 'lucide-react';
 
 export default function ManageQuestions() {
   const { quizId } = useParams();
+  const formRef = useRef(null);
   const [quiz, setQuiz] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -24,6 +27,15 @@ export default function ManageQuestions() {
   useEffect(() => {
     loadData();
   }, [quizId]);
+
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
 
   const loadData = async () => {
     try {
@@ -44,6 +56,25 @@ export default function ManageQuestions() {
   const resetForm = () => {
     setFormData({ question: '', option1: '', option2: '', option3: '', option4: '', correctOption: 1 });
     setEditingId(null);
+    setShowModal(false);
+    if (formRef.current) {
+      formRef.current.reset();
+    }
+  };
+
+  const openModal = (question) => {
+    setFormData({
+      question: question.question,
+      option1: question.option1,
+      option2: question.option2,
+      option3: question.option3,
+      option4: question.option4,
+      correctOption: question.correct_option,
+    });
+    setEditingId(question.id);
+    setSuccess('');
+    setError('');
+    setShowModal(true);
   };
 
   const handleChange = (e) => {
@@ -60,13 +91,9 @@ export default function ManageQuestions() {
     setSuccess('');
     setSaving(true);
     try {
-      if (editingId) {
-        await questionAPI.updateQuestion(editingId, { ...formData, quizId: parseInt(quizId) });
-        setSuccess('Question updated successfully!');
-      } else {
-        await questionAPI.addQuestion({ ...formData, quizId: parseInt(quizId) });
-        setSuccess('Question added successfully!');
-      }
+      // Always add from left form, update happens in modal
+      await questionAPI.addQuestion({ ...formData, quizId: parseInt(quizId) });
+      setSuccess('Question added successfully!');
       resetForm();
       loadData();
     } catch (err) {
@@ -76,20 +103,21 @@ export default function ManageQuestions() {
     }
   };
 
-  const handleEdit = (question) => {
-    setFormData({
-      question: question.question,
-      option1: question.option1,
-      option2: question.option2,
-      option3: question.option3,
-      option4: question.option4,
-      correctOption: question.correct_option,
-    });
-    setEditingId(question.id);
-    setSuccess('');
+  const handleUpdateQuestion = async (e) => {
+    e.preventDefault();
     setError('');
-    // Scroll left panel to top on mobile
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setSuccess('');
+    setSaving(true);
+    try {
+      await questionAPI.updateQuestion(editingId, { ...formData, quizId: parseInt(quizId) });
+      setSuccess('Question updated successfully!');
+      resetForm();
+      loadData();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update question');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -158,45 +186,38 @@ export default function ManageQuestions() {
             <div className="card-body">
               {/* Form header */}
               <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
                 marginBottom: '1.25rem',
               }}>
                 <h2 style={{ fontSize: '1.1rem', margin: 0 }}>
-                  {editingId ? 'Edit Question' : 'Add New Question'}
+                  Add New Question
                 </h2>
-                {editingId && (
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-sm"
-                    onClick={resetForm}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: 'var(--text-muted)',
-                      fontSize: '0.8rem',
-                      padding: '0.25rem 0.5rem',
-                    }}
-                  >
-                    Cancel edit
-                  </button>
-                )}
               </div>
 
-              <form onSubmit={handleSubmit}>
+              <form ref={formRef} onSubmit={handleSubmit}>
                 {/* Question text */}
                 <div className="mb-3">
                   <label className="form-label">Question *</label>
                   <textarea
                     name="question"
-                    className="form-control"
+                    className="auth-input"
                     rows="3"
                     placeholder="Enter the question..."
                     value={formData.question}
                     onChange={handleChange}
                     required
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 1rem',
+                      background: '#f3f4f6',
+                      border: '1px solid transparent',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem',
+                      color: '#111827',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      fontFamily: 'inherit',
+                      resize: 'vertical'
+                    }}
                   />
                 </div>
 
@@ -207,11 +228,22 @@ export default function ManageQuestions() {
                     <input
                       type="text"
                       name={`option${num}`}
-                      className="form-control"
+                      className="auth-input"
                       placeholder={`Enter option ${num}...`}
                       value={formData[`option${num}`]}
                       onChange={handleChange}
                       required
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 1rem',
+                        background: '#f3f4f6',
+                        border: '1px solid transparent',
+                        borderRadius: '8px',
+                        fontSize: '0.85rem',
+                        color: '#111827',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
                     />
                   </div>
                 ))}
@@ -221,10 +253,22 @@ export default function ManageQuestions() {
                   <label className="form-label">Correct Option *</label>
                   <select
                     name="correctOption"
-                    className="form-select"
+                    className="auth-input"
                     value={formData.correctOption}
                     onChange={handleChange}
                     required
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 1rem',
+                      background: '#f3f4f6',
+                      border: '1px solid transparent',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem',
+                      color: '#111827',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      cursor: 'pointer'
+                    }}
                   >
                     {[1, 2, 3, 4].map((n) => (
                       <option key={n} value={n}>Option {n}</option>
@@ -238,23 +282,9 @@ export default function ManageQuestions() {
                     type="submit"
                     className="btn btn-primary"
                     disabled={saving}
-                    style={{ flex: 1 }}
                   >
-                    {saving
-                      ? 'Saving...'
-                      : editingId
-                        ? 'Update Question'
-                        : 'Add Question'}
+                    {saving ? 'Saving...' : 'Add Question'}
                   </button>
-                  {editingId && (
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary"
-                      onClick={resetForm}
-                    >
-                      Cancel
-                    </button>
-                  )}
                 </div>
               </form>
             </div>
@@ -305,19 +335,63 @@ export default function ManageQuestions() {
                         }}>
                           Q{index + 1}
                         </span>
-                        <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
                           <button
-                            onClick={() => handleEdit(q)}
-                            className="btn btn-primary btn-sm"
-                            style={{ padding: '0.25rem 0.65rem', fontSize: '0.75rem' }}
+                            onClick={() => openModal(q)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.4rem',
+                              padding: '0.5rem 1rem',
+                              background: '#f3f4f6',
+                              border: 'none',
+                              borderRadius: '12px',
+                              fontSize: '0.8rem',
+                              fontWeight: '500',
+                              color: '#374151',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              whiteSpace: 'nowrap'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#000000';
+                              e.currentTarget.style.color = '#ffffff';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#f3f4f6';
+                              e.currentTarget.style.color = '#374151';
+                            }}
                           >
+                            <Edit2 size={14} strokeWidth={2} color="currentColor" />
                             Edit
                           </button>
                           <button
                             onClick={() => handleDelete(q.id)}
-                            className="btn btn-danger btn-sm"
-                            style={{ padding: '0.25rem 0.65rem', fontSize: '0.75rem' }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.4rem',
+                              padding: '0.5rem 1rem',
+                              background: '#fee2e2',
+                              border: 'none',
+                              borderRadius: '12px',
+                              fontSize: '0.8rem',
+                              fontWeight: '500',
+                              color: '#dc2626',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              whiteSpace: 'nowrap'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#fca5a5';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#fee2e2';
+                            }}
                           >
+                            <Trash2 size={14} strokeWidth={2} />
                             Delete
                           </button>
                         </div>
@@ -382,6 +456,235 @@ export default function ManageQuestions() {
             .mq-grid { grid-template-columns: 1fr !important; }
           }
         `}</style>
+
+        {/* ── Edit Modal ── */}
+        {showModal && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '1rem',
+            }}
+            onClick={(e) => e.target === e.currentTarget && resetForm()}
+          >
+            <div
+              style={{
+                background: '#ffffff',
+                borderRadius: '12px',
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+                maxWidth: '600px',
+                width: '100%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                animation: 'slideUp 0.3s ease-out',
+              }}
+            >
+              {/* Modal Header */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '1.5rem',
+                  borderBottom: '1px solid #e5e7eb',
+                }}
+              >
+                <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '600' }}>
+                  Edit Question
+                </h2>
+                <button
+                  onClick={resetForm}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#6b7280',
+                    transition: 'color 0.2s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#111827')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#6b7280')}
+                >
+                  <X size={20} strokeWidth={2} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div style={{ padding: '1.5rem' }}>
+                <form onSubmit={handleUpdateQuestion}>
+                  {/* Question text */}
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.5rem', color: '#111827' }}>
+                      Question *
+                    </label>
+                    <textarea
+                      name="question"
+                      className="auth-input"
+                      rows="3"
+                      placeholder="Enter the question..."
+                      value={formData.question}
+                      onChange={handleChange}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 1rem',
+                        background: '#f3f4f6',
+                        border: '1px solid transparent',
+                        borderRadius: '8px',
+                        fontSize: '0.85rem',
+                        color: '#111827',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        fontFamily: 'inherit',
+                        resize: 'vertical',
+                      }}
+                    />
+                  </div>
+
+                  {/* Options */}
+                  {[1, 2, 3, 4].map((num) => (
+                    <div key={num} style={{ marginBottom: '1.5rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.5rem', color: '#111827' }}>
+                        Option {num} *
+                      </label>
+                      <input
+                        type="text"
+                        name={`option${num}`}
+                        className="auth-input"
+                        placeholder={`Enter option ${num}...`}
+                        value={formData[`option${num}`]}
+                        onChange={handleChange}
+                        required
+                        style={{
+                          width: '100%',
+                          padding: '0.65rem 1rem',
+                          background: '#f3f4f6',
+                          border: '1px solid transparent',
+                          borderRadius: '8px',
+                          fontSize: '0.85rem',
+                          color: '#111827',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                  ))}
+
+                  {/* Correct Option */}
+                  <div style={{ marginBottom: '2rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.5rem', color: '#111827' }}>
+                      Correct Option *
+                    </label>
+                    <select
+                      name="correctOption"
+                      className="auth-input"
+                      value={formData.correctOption}
+                      onChange={handleChange}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 1rem',
+                        background: '#f3f4f6',
+                        border: '1px solid transparent',
+                        borderRadius: '8px',
+                        fontSize: '0.85rem',
+                        color: '#111827',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {[1, 2, 3, 4].map((n) => (
+                        <option key={n} value={n}>
+                          Option {n}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '1rem',
+                      paddingTop: '1.5rem',
+                      borderTop: '1px solid #e5e7eb',
+                      justifyContent: 'flex-end',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      style={{
+                        padding: '0.7rem 1.5rem',
+                        background: '#f3f4f6',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                        color: '#374151',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#e5e7eb')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = '#f3f4f6')}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      style={{
+                        padding: '0.7rem 1.5rem',
+                        background: '#111827',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                        color: '#ffffff',
+                        cursor: saving ? 'not-allowed' : 'pointer',
+                        opacity: saving ? 0.6 : 1,
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!saving) e.currentTarget.style.background = '#000000';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!saving) e.currentTarget.style.background = '#111827';
+                      }}
+                    >
+                      {saving ? 'Updating...' : 'Update Question'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <style>{`
+                @keyframes slideUp {
+                  from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                  }
+                  to {
+                    opacity: 1;
+                    transform: translateY(0);
+                  }
+                }
+              `}</style>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

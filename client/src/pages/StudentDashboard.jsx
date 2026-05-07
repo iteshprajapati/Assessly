@@ -41,12 +41,12 @@ export default function StudentDashboard() {
   }
 
   return (
-    <main style={{ flex: 1 }}>
+    <main style={{ flex: 1, backgroundColor: '#ffffff' }}>
       <div className="container">
         <div style={{ padding: '2rem 0' }}>
           <div style={{ marginBottom: '2rem' }}>
-            <h1 style={{ fontSize: '2rem' }}>Student Dashboard</h1>
-            <p style={{ color: 'var(--text-muted)' }}>Attempt quizzes and track your progress</p>
+            <h1 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>Student Dashboard</h1>
+            <p style={{ color: 'var(--text-muted)', margin: 0 }}>Attempt quizzes and track your progress</p>
           </div>
 
           {/* Tabs */}
@@ -85,9 +85,9 @@ export default function StudentDashboard() {
           {tab === 'available' && (
             <div>
               {quizzes.length > 0 ? (
-                <div className="row">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
                   {quizzes.map((quiz) => (
-                    <div key={quiz.id} className="col-6 mb-3">
+                    <div key={quiz.id}>
                       <div className="card">
                         <div className="card-body">
                           <h3 style={{ marginBottom: '0.5rem' }}>{quiz.title}</h3>
