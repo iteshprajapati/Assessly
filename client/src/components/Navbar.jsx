@@ -15,9 +15,7 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="container d-flex justify-content-between align-items-center">
         <Link to="/" className="d-flex align-items-center gap-2" style={{ textDecoration: 'none' }}>
-          <div className="brand-icon">
-            <span>❓</span>
-          </div>
+          <img src="/logo.png" alt="QuizPortal Logo" style={{ width: '64px', height: '64px', borderRadius: '8px', objectFit: 'cover' }} />
           <span className="brand-name">QuizPortal</span>
         </Link>
 
@@ -37,7 +35,7 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/login" style={{
+              <Link to="/login" className="hover-white-btn" style={{
                 padding: '0.35rem 0.9rem',
                 background: '#fff',
                 color: '#111827',
@@ -49,7 +47,7 @@ export default function Navbar() {
               }}>
                 Login
               </Link>
-              <Link to="/register" style={{
+              <Link to="/register" className="hover-black-btn" style={{
                 padding: '0.35rem 0.9rem',
                 background: '#111827',
                 color: '#fff',

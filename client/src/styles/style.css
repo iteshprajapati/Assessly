@@ -300,7 +300,7 @@ a:hover {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--primary-dark);
+  background: #374151;
 }
 
 .btn-secondary {
@@ -368,6 +368,21 @@ a:hover {
 .btn-lg {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
+}
+
+/* Custom Hover Utilities for Inline Buttons */
+.hover-black-btn {
+  transition: background-color 0.2s !important;
+}
+.hover-black-btn:hover:not(:disabled) {
+  background-color: #374151 !important;
+}
+
+.hover-white-btn {
+  transition: background-color 0.2s !important;
+}
+.hover-white-btn:hover:not(:disabled) {
+  background-color: #f3f4f6 !important;
 }
 
 /* ---------- Forms ---------- */
@@ -786,12 +801,18 @@ a:hover {
 
 /* ---------- Auth Page Inputs ---------- */
 .auth-input {
-  transition: background 0.15s, border-color 0.15s;
+  transition: background-color 0.15s, border-color 0.15s;
 }
 
 .auth-input:focus {
-  background: #ffffff !important;
+  background-color: #ffffff !important;
   border: 1px solid #d1d5db !important;
   outline: none !important;
   box-shadow: none !important;
+}
+
+.auth-input::placeholder {
+  color: #9ca3af;
+  opacity: 0.6;
+  font-weight: 400;
 }

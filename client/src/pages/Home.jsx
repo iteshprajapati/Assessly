@@ -70,21 +70,11 @@ export default function Home() {
           textAlign: 'center',
           marginBottom: '1.75rem',
         }}>
-          <div style={{
-            width: '64px',
-            height: '64px',
-            background: 'linear-gradient(135deg, #7c6ff7, #6366f1)',
-            borderRadius: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 1.25rem',
-            fontSize: '1.8rem',
-            color: '#fff',
-            boxShadow: '0 4px 14px rgba(99,102,241,0.3)',
-          }}>
-            ❓
-          </div>
+          <img 
+            src="/logo.png" 
+            alt="QuizPortal Logo" 
+            style={{ width: '80px', height: 'auto', margin: '0 auto 1.25rem', display: 'block', borderRadius: '14px' }} 
+          />
 
           <h1 style={{
             fontSize: '2.4rem',

@@ -35,29 +35,19 @@ export default function Login() {
 
   return (
     <main style={{ flex: 1, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: '480px', padding: '2rem 1.5rem' }}>
+      <div style={{ width: '100%', maxWidth: '440px', padding: '2.5rem 2rem' }}>
 
         {/* Icon */}
         <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-          <div style={{
-            width: '64px',
-            height: '64px',
-            margin: '0 auto 1.1rem',
-            background: 'linear-gradient(135deg, #7c6ff7, #6366f1)',
-            borderRadius: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            fontSize: '1.8rem',
-            boxShadow: '0 4px 14px rgba(99,102,241,0.25)',
-          }}>
-            ❓
-          </div>
-          <h1 style={{ fontSize: '1.55rem', fontWeight: '700', color: '#111827', marginBottom: '0.3rem' }}>
+          <img 
+            src="/logo.png" 
+            alt="QuizPortal Logo" 
+            style={{ width: '100px', height: 'auto', margin: '0 auto 1.25rem', display: 'block', borderRadius: '12px' }} 
+          />
+          <h1 style={{ fontSize: '1.4rem', fontWeight: '700', color: '#111827', marginBottom: '0.2rem' }}>
             Welcome back
           </h1>
-          <p style={{ color: '#6b7280', fontSize: '0.95rem', margin: 0 }}>
+          <p style={{ color: '#6b7280', fontSize: '0.85rem', margin: 0 }}>
             Sign in to your QuizPortal account
           </p>
         </div>
@@ -67,7 +57,7 @@ export default function Login() {
         <form onSubmit={handleSubmit} style={{ marginTop: '1.5rem' }}>
           {/* Email */}
           <div style={{ marginBottom: '1.1rem' }}>
-            <label style={{ display: 'block', fontWeight: '600', fontSize: '0.9rem', color: '#111827', marginBottom: '0.45rem' }}>
+            <label style={{ display: 'block', fontWeight: '600', fontSize: '0.8rem', color: '#111827', marginBottom: '0.4rem' }}>
               Email Address
             </label>
             <input
@@ -80,11 +70,11 @@ export default function Login() {
               required
               style={{
                 width: '100%',
-                padding: '0.75rem 1rem',
+                padding: '0.65rem 1rem',
                 background: '#f3f4f6',
                 border: '1px solid transparent',
-                borderRadius: '10px',
-                fontSize: '0.95rem',
+                borderRadius: '8px',
+                fontSize: '0.85rem',
                 color: '#111827',
                 outline: 'none',
                 boxSizing: 'border-box',
@@ -94,7 +84,7 @@ export default function Login() {
 
           {/* Password */}
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', fontWeight: '600', fontSize: '0.9rem', color: '#111827', marginBottom: '0.45rem' }}>
+            <label style={{ display: 'block', fontWeight: '600', fontSize: '0.8rem', color: '#111827', marginBottom: '0.4rem' }}>
               Password<span style={{ color: '#ef4444', marginLeft: '2px' }}>•</span>
             </label>
             <div style={{ position: 'relative' }}>
@@ -108,11 +98,11 @@ export default function Login() {
                 required
                 style={{
                   width: '100%',
-                  padding: '0.75rem 2.8rem 0.75rem 1rem',
+                  padding: '0.65rem 2.5rem 0.65rem 1rem',
                   background: '#f3f4f6',
                   border: '1px solid transparent',
-                  borderRadius: '10px',
-                  fontSize: '0.95rem',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
                   color: '#111827',
                   outline: 'none',
                   boxSizing: 'border-box',
@@ -157,15 +147,16 @@ export default function Login() {
           {/* Submit */}
           <button
             type="submit"
+            className="hover-black-btn"
             disabled={loading}
             style={{
               width: '100%',
-              padding: '0.8rem',
+              padding: '0.65rem',
               background: loading ? '#374151' : '#111827',
               color: '#fff',
               border: 'none',
-              borderRadius: '12px',
-              fontSize: '1rem',
+              borderRadius: '8px',
+              fontSize: '0.9rem',
               fontWeight: '600',
               cursor: loading ? 'not-allowed' : 'pointer',
               display: 'flex',
@@ -175,7 +166,16 @@ export default function Login() {
               transition: 'background 0.2s',
             }}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Signing in...' : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                  <polyline points="10 17 15 12 10 7"/>
+                  <line x1="15" x2="3" y1="12" y2="12"/>
+                </svg>
+                Sign In
+              </>
+            )}
           </button>
         </form>
 
