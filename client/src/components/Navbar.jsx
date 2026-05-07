@@ -1,0 +1,70 @@
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
+export default function Navbar() {
+  const { user, logout, isLoggedIn } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  return (
+    <nav className="navbar">
+      <div className="container d-flex justify-content-between align-items-center">
+        <Link to="/" className="d-flex align-items-center gap-2" style={{ textDecoration: 'none' }}>
+          <div className="brand-icon">
+            <span>❓</span>
+          </div>
+          <span className="brand-name">QuizPortal</span>
+        </Link>
+
+        <div className="d-flex gap-2">
+          {isLoggedIn() ? (
+            <>
+              <span className="user-avatar">{user?.name?.charAt(0).toUpperCase()}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className="fw-600">{user?.name}</span>
+                <span className="role-badge" style={{ marginLeft: '0.25rem' }}>
+                  {user?.role}
+                </span>
+              </div>
+              <button onClick={handleLogout} className="btn btn-secondary btn-sm">
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" style={{
+                padding: '0.35rem 0.9rem',
+                background: '#fff',
+                color: '#111827',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontWeight: '500',
+                fontSize: '0.85rem',
+                textDecoration: 'none',
+              }}>
+                Login
+              </Link>
+              <Link to="/register" style={{
+                padding: '0.35rem 0.9rem',
+                background: '#111827',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: '600',
+                fontSize: '0.85rem',
+                textDecoration: 'none',
+              }}>
+                Register
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+}
