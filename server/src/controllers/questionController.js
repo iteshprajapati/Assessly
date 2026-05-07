@@ -1,6 +1,7 @@
 const { body, validationResult } = require('express-validator');
 const QuestionModel = require('../models/Question');
 const QuizModel = require('../models/Quiz');
+const ResultModel = require('../models/Result');
 
 exports.addQuestion = [
   body('quizId').isInt().withMessage('Quiz ID is required'),
@@ -10,6 +11,7 @@ exports.addQuestion = [
   body('option3').trim().notEmpty().withMessage('Option 3 is required'),
   body('option4').trim().notEmpty().withMessage('Option 4 is required'),
   body('correctOption').isInt({ min: 1, max: 4 }).withMessage('Correct option must be 1-4'),
+  body('topic').optional().isLength({ max: 100 }).withMessage('Topic must be 100 characters or less'),
 
   async (req, res) => {
     const errors = validationResult(req);
@@ -19,6 +21,8 @@ exports.addQuestion = [
 
     try {
       const { quizId, question, option1, option2, option3, option4, correctOption } = req.body;
+      const rawTopic = typeof req.body.topic === 'string' ? req.body.topic.trim() : '';
+      const topic = rawTopic || 'General';
       const teacherId = req.user.userId;
 
       // Verify quiz ownership
@@ -30,6 +34,7 @@ exports.addQuestion = [
       const questionId = await QuestionModel.create(
         quizId,
         question,
+        topic,
         option1,
         option2,
         option3,
@@ -51,11 +56,19 @@ exports.addQuestion = [
 exports.getQuestions = async (req, res) => {
   try {
     const { quizId } = req.params;
-    const teacherId = req.user.userId;
+    const { userId, role } = req.user;
 
-    // Verify quiz ownership
-    const quiz = await QuizModel.findByIdAndTeacher(quizId, teacherId);
-    if (!quiz) {
+    if (role === 'teacher') {
+      const quiz = await QuizModel.findByIdAndTeacher(quizId, userId);
+      if (!quiz) {
+        return res.status(403).json({ error: 'Not authorized' });
+      }
+    } else if (role === 'student') {
+      const hasAttempted = await ResultModel.hasAttempted(userId, quizId);
+      if (!hasAttempted) {
+        return res.status(403).json({ error: 'Not authorized' });
+      }
+    } else {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
@@ -77,6 +90,7 @@ exports.updateQuestion = [
   body('option3').trim().notEmpty().withMessage('Option 3 is required'),
   body('option4').trim().notEmpty().withMessage('Option 4 is required'),
   body('correctOption').isInt({ min: 1, max: 4 }).withMessage('Correct option must be 1-4'),
+  body('topic').optional().isLength({ max: 100 }).withMessage('Topic must be 100 characters or less'),
 
   async (req, res) => {
     const errors = validationResult(req);
@@ -87,6 +101,8 @@ exports.updateQuestion = [
     try {
       const { id } = req.params;
       const { question, option1, option2, option3, option4, correctOption } = req.body;
+      const rawTopic = typeof req.body.topic === 'string' ? req.body.topic.trim() : '';
+      const topic = rawTopic || 'General';
       const teacherId = req.user.userId;
 
       // Verify question ownership (through quiz)
@@ -100,7 +116,7 @@ exports.updateQuestion = [
         return res.status(403).json({ error: 'Not authorized' });
       }
 
-      await QuestionModel.update(id, question, option1, option2, option3, option4, correctOption);
+      await QuestionModel.update(id, question, topic, option1, option2, option3, option4, correctOption);
 
       res.json({
         success: true,

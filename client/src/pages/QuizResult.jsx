@@ -58,6 +58,8 @@ export default function QuizResult() {
     return 'badge-danger';
   };
 
+  const percentage = result?.percentage ?? 0;
+
   return (
     <main style={{ flex: 1 }}>
       <div className="container" style={{ padding: '2rem 0' }}>
@@ -74,8 +76,8 @@ export default function QuizResult() {
                   <div style={{ color: 'var(--text-muted)' }}>Correct Answers</div>
                 </div>
                 <div>
-                  <span className={`badge ${getBadgeColor(result?.percentage)}`} style={{ fontSize: '1.5rem', padding: '0.75rem 1.5rem' }}>
-                    {result?.percentage}%
+                  <span className={`badge ${getBadgeColor(percentage)}`} style={{ fontSize: '1.5rem', padding: '0.75rem 1.5rem' }}>
+                    {percentage}%
                   </span>
                 </div>
               </div>
@@ -102,9 +104,7 @@ export default function QuizResult() {
                 const isCorrect = answer?.selected_option === question.correct_option;
 
                 return (
-                  <div key={question.id} className={`question-card ${isCorrect ? 'correct' : 'incorrect'}`} style={{
-                    borderLeft: `4px solid ${isCorrect ? 'var(--success)' : 'var(--danger)'}`
-                  }}>
+                  <div key={question.id} className={`question-card ${isCorrect ? 'correct' : 'incorrect'}`}>
                     <div className="question-number">Question {index + 1}</div>
                     <div className="question-text">{question.question}</div>
 

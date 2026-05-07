@@ -21,6 +21,12 @@ exports.submitQuiz = [
       const { quizId, answers } = req.body;
       const studentId = req.user.userId;
 
+      const hasAttempted = await ResultModel.hasAttempted(studentId, quizId);
+      if (hasAttempted) {
+        await connection.rollback();
+        return res.status(409).json({ error: 'Quiz already submitted' });
+      }
+
       // Get questions
       const questions = await QuestionModel.getByQuiz(quizId);
       if (!questions.length) {
@@ -132,6 +138,40 @@ exports.getQuizStats = async (req, res) => {
     res.json({
       success: true,
       data: stats,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getQuizTopicStats = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const teacherId = req.user.userId;
+
+    const QuizModel = require('../models/Quiz');
+    const quiz = await QuizModel.findByIdAndTeacher(quizId, teacherId);
+    if (!quiz) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const rows = await ResultModel.getTopicStats(quizId);
+    const data = rows.map((row) => {
+      const totalAnswers = row.total_answers || 0;
+      const correctAnswers = row.correct_answers || 0;
+      const accuracy = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
+      return {
+        topic: row.topic,
+        questionCount: row.question_count,
+        totalAnswers,
+        correctAnswers,
+        accuracy,
+      };
+    });
+
+    res.json({
+      success: true,
+      data,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -72,6 +72,23 @@ class ResultModel {
     );
     return rows[0] || { total_attempts: 0, average_score: 0, min_score: 0, max_score: 0 };
   }
+
+  static async getTopicStats(quizId) {
+    const [rows] = await pool.query(
+      `SELECT
+        COALESCE(q.topic, 'General') AS topic,
+        COUNT(DISTINCT q.id) AS question_count,
+        COUNT(sa.id) AS total_answers,
+        SUM(CASE WHEN sa.selected_option = q.correct_option THEN 1 ELSE 0 END) AS correct_answers
+       FROM questions q
+       LEFT JOIN student_answers sa ON sa.question_id = q.id AND sa.quiz_id = q.quiz_id
+       WHERE q.quiz_id = ?
+       GROUP BY COALESCE(q.topic, 'General')
+       ORDER BY topic ASC`,
+      [quizId]
+    );
+    return rows;
+  }
 }
 
 module.exports = ResultModel;

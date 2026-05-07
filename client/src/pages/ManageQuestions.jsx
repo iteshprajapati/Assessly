@@ -16,6 +16,7 @@ export default function ManageQuestions() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({
+    topic: '',
     question: '',
     option1: '',
     option2: '',
@@ -54,7 +55,7 @@ export default function ManageQuestions() {
   };
 
   const resetForm = () => {
-    setFormData({ question: '', option1: '', option2: '', option3: '', option4: '', correctOption: 1 });
+    setFormData({ topic: '', question: '', option1: '', option2: '', option3: '', option4: '', correctOption: 1 });
     setEditingId(null);
     setShowModal(false);
     if (formRef.current) {
@@ -64,6 +65,7 @@ export default function ManageQuestions() {
 
   const openModal = (question) => {
     setFormData({
+      topic: question.topic || '',
       question: question.question,
       option1: question.option1,
       option2: question.option2,
@@ -194,6 +196,29 @@ export default function ManageQuestions() {
               </div>
 
               <form ref={formRef} onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label className="form-label">Topic</label>
+                  <input
+                    type="text"
+                    name="topic"
+                    className="auth-input"
+                    placeholder="e.g. Algebra, Networking, Photosynthesis"
+                    value={formData.topic}
+                    onChange={handleChange}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 1rem',
+                      background: '#f3f4f6',
+                      border: '1px solid transparent',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem',
+                      color: '#111827',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <div className="form-text">Optional, used for mastery analytics.</div>
+                </div>
                 {/* Question text */}
                 <div className="mb-3">
                   <label className="form-label">Question *</label>
@@ -402,6 +427,20 @@ export default function ManageQuestions() {
                         {q.question}
                       </p>
 
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        padding: '0.2rem 0.6rem',
+                        background: '#f3f4f6',
+                        borderRadius: '999px',
+                        fontSize: '0.75rem',
+                        color: '#374151',
+                        marginBottom: '0.75rem'
+                      }}>
+                        Topic: <strong>{q.topic || 'General'}</strong>
+                      </div>
+
                       {/* Options */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                         {[1, 2, 3, 4].map((num) => {
@@ -523,6 +562,30 @@ export default function ManageQuestions() {
               {/* Modal Body */}
               <div style={{ padding: '1.5rem' }}>
                 <form onSubmit={handleUpdateQuestion}>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.5rem', color: '#111827' }}>
+                      Topic
+                    </label>
+                    <input
+                      type="text"
+                      name="topic"
+                      className="auth-input"
+                      placeholder="e.g. Algebra, Networking, Photosynthesis"
+                      value={formData.topic}
+                      onChange={handleChange}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 1rem',
+                        background: '#f3f4f6',
+                        border: '1px solid transparent',
+                        borderRadius: '8px',
+                        fontSize: '0.85rem',
+                        color: '#111827',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
                   {/* Question text */}
                   <div style={{ marginBottom: '1.5rem' }}>
                     <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.5rem', color: '#111827' }}>

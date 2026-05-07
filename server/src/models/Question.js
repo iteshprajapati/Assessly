@@ -1,11 +1,11 @@
 const pool = require('../config/database');
 
 class QuestionModel {
-  static async create(quizId, question, option1, option2, option3, option4, correctOption) {
+  static async create(quizId, question, topic, option1, option2, option3, option4, correctOption) {
     const [result] = await pool.query(
-      `INSERT INTO questions (quiz_id, question, option1, option2, option3, option4, correct_option)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [quizId, question, option1, option2, option3, option4, correctOption]
+      `INSERT INTO questions (quiz_id, question, topic, option1, option2, option3, option4, correct_option)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [quizId, question, topic, option1, option2, option3, option4, correctOption]
     );
     return result.insertId;
   }
@@ -34,11 +34,11 @@ class QuestionModel {
     return rows;
   }
 
-  static async update(id, question, option1, option2, option3, option4, correctOption) {
+  static async update(id, question, topic, option1, option2, option3, option4, correctOption) {
     await pool.query(
-      `UPDATE questions SET question = ?, option1 = ?, option2 = ?, option3 = ?, option4 = ?, correct_option = ? 
+      `UPDATE questions SET question = ?, topic = ?, option1 = ?, option2 = ?, option3 = ?, option4 = ?, correct_option = ? 
        WHERE id = ?`,
-      [question, option1, option2, option3, option4, correctOption, id]
+      [question, topic, option1, option2, option3, option4, correctOption, id]
     );
   }
 

@@ -25,6 +25,7 @@ const migrations = [
     id INT AUTO_INCREMENT PRIMARY KEY,
     quiz_id INT NOT NULL,
     question TEXT NOT NULL,
+    topic VARCHAR(100) NOT NULL DEFAULT 'General',
     option1 VARCHAR(255) NOT NULL,
     option2 VARCHAR(255) NOT NULL,
     option3 VARCHAR(255) NOT NULL,
@@ -40,6 +41,7 @@ const migrations = [
     score INT NOT NULL DEFAULT 0,
     total_questions INT NOT NULL DEFAULT 0,
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_student_quiz (student_id, quiz_id),
     FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
   ) ENGINE=InnoDB;`,
@@ -62,6 +64,25 @@ async function runMigrations() {
     for (const migration of migrations) {
       await connection.query(migration);
     }
+
+    const [indexes] = await connection.query(
+      "SHOW INDEX FROM results WHERE Key_name = 'uniq_student_quiz'"
+    );
+    if (indexes.length === 0) {
+      await connection.query(
+        'ALTER TABLE results ADD UNIQUE KEY uniq_student_quiz (student_id, quiz_id)'
+      );
+    }
+
+    const [topicColumn] = await connection.query(
+      "SHOW COLUMNS FROM questions LIKE 'topic'"
+    );
+    if (topicColumn.length === 0) {
+      await connection.query(
+        "ALTER TABLE questions ADD COLUMN topic VARCHAR(100) NOT NULL DEFAULT 'General'"
+      );
+    }
+    await connection.query("UPDATE questions SET topic = 'General' WHERE topic IS NULL OR topic = ''");
     console.log('✓ Database migrations completed');
   } catch (error) {
     console.error('✗ Migration Error:', error.message);

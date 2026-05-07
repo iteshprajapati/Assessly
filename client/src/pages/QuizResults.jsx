@@ -9,6 +9,7 @@ export default function QuizResults() {
   const [quiz, setQuiz] = useState(null);
   const [results, setResults] = useState([]);
   const [stats, setStats] = useState(null);
+  const [topicStats, setTopicStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -19,14 +20,16 @@ export default function QuizResults() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [quizRes, resultsRes, statsRes] = await Promise.all([
+      const [quizRes, resultsRes, statsRes, topicRes] = await Promise.all([
         quizAPI.getQuiz(quizId),
         resultAPI.getQuizResults(quizId),
         resultAPI.getQuizStats(quizId),
+        resultAPI.getQuizTopicStats(quizId),
       ]);
       setQuiz(quizRes.data);
       setResults(resultsRes.data.data || []);
       setStats(statsRes.data.data || {});
+      setTopicStats(topicRes.data.data || []);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load results');
     } finally {
@@ -46,6 +49,12 @@ export default function QuizResults() {
     );
   }
 
+  const getMasteryBadge = (accuracy) => {
+    if (accuracy >= 80) return 'badge-success';
+    if (accuracy >= 60) return 'badge-warning';
+    return 'badge-danger';
+  };
+
   return (
     <main style={{ flex: 1 }}>
       <div className="container" style={{ padding: '2rem 0' }}>
@@ -60,6 +69,42 @@ export default function QuizResults() {
         </div>
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+
+        {topicStats.length > 0 && (
+          <div className="card mb-4">
+            <div className="card-header">Topic Mastery</div>
+            <div className="card-body" style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600' }}>Topic</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600' }}>Questions</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600' }}>Answers</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600' }}>Accuracy</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600' }}>Recommendation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topicStats.map((topic) => {
+                    const badge = getMasteryBadge(topic.accuracy);
+                    const recommendation = topic.accuracy < 60 ? 'Reteach' : topic.accuracy < 80 ? 'Reinforce' : 'Good';
+                    return (
+                      <tr key={topic.topic} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '0.75rem' }}>{topic.topic}</td>
+                        <td style={{ padding: '0.75rem' }}>{topic.questionCount}</td>
+                        <td style={{ padding: '0.75rem' }}>{topic.totalAnswers}</td>
+                        <td style={{ padding: '0.75rem' }}>
+                          <span className={`badge ${badge}`}>{topic.accuracy}%</span>
+                        </td>
+                        <td style={{ padding: '0.75rem' }}>{recommendation}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Statistics */}
         {stats && stats.total_attempts > 0 && (

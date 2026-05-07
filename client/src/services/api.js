@@ -73,6 +73,7 @@ export const resultAPI = {
   getStudentResults: () => api.get('/results/student/my-results'),
   getQuizResults: (quizId) => api.get(`/results/quiz/${quizId}/results`),
   getQuizStats: (quizId) => api.get(`/results/quiz/${quizId}/stats`),
+  getQuizTopicStats: (quizId) => api.get(`/results/quiz/${quizId}/topics`),
   checkAttempted: (quizId) => api.get(`/results/check/${quizId}`),
 };
 
