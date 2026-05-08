@@ -18,6 +18,39 @@ async function verifyPassword(password, hash) {
 }
 
 /**
+ * Generate a numeric OTP code
+ */
+function generateOtpCode(length = 6) {
+  const min = 10 ** (length - 1);
+  const max = 10 ** length - 1;
+  return String(Math.floor(Math.random() * (max - min + 1)) + min);
+}
+
+/**
+ * Hash an OTP code
+ */
+async function hashOtp(otpCode) {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(otpCode, salt);
+}
+
+/**
+ * Compare OTP with hash
+ */
+async function verifyOtp(otpCode, hash) {
+  return bcrypt.compare(otpCode, hash);
+}
+
+/**
+ * Get OTP expiry date
+ */
+function getOtpExpiry(minutes = Number(process.env.OTP_EXPIRE_MINUTES || 10)) {
+  const expiresAt = new Date();
+  expiresAt.setMinutes(expiresAt.getMinutes() + minutes);
+  return expiresAt;
+}
+
+/**
  * Generate JWT token
  */
 function generateToken(userId, role) {
@@ -79,6 +112,10 @@ function getScoreBadge(percentage) {
 module.exports = {
   hashPassword,
   verifyPassword,
+  generateOtpCode,
+  hashOtp,
+  verifyOtp,
+  getOtpExpiry,
   generateToken,
   verifyToken,
   sanitizeUser,

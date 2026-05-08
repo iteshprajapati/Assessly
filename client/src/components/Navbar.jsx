@@ -15,7 +15,7 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="container d-flex justify-content-between align-items-center">
         <Link to="/" className="d-flex align-items-center gap-2" style={{ textDecoration: 'none' }}>
-          <img src="/logo.png" alt="QuizPortal Logo" style={{ width: '64px', height: '64px', borderRadius: '8px', objectFit: 'cover' }} />
+          <img src="/logo.png" alt="QuizPortal Logo" className="navbar-logo" />
           <span className="brand-name">QuizPortal</span>
         </Link>
 
@@ -39,7 +39,7 @@ export default function Navbar() {
                 padding: '0.35rem 0.9rem',
                 background: '#fff',
                 color: '#111827',
-                border: '1px solid #d1d5db',
+                border: 'none',
                 borderRadius: '8px',
                 fontWeight: '500',
                 fontSize: '0.85rem',

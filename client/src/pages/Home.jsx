@@ -2,11 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-function FeatureCard({ letter, iconBg, iconColor, title, description }) {
+function FeatureCard({ iconPath, iconBg, iconColor, title, description }) {
   return (
     <div style={{
       background: '#fff',
-      border: '1px solid #e5e7eb',
+      border: 'none',
       borderRadius: '16px',
       padding: '2.25rem 1.75rem',
       textAlign: 'center',
@@ -14,20 +14,19 @@ function FeatureCard({ letter, iconBg, iconColor, title, description }) {
       minWidth: '220px',
     }}>
       <div style={{
-        width: '50px',
-        height: '50px',
+        width: '52px',
+        height: '52px',
         background: iconBg,
         borderRadius: '14px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         margin: '0 auto 1.25rem',
-        fontSize: '1.1rem',
-        fontWeight: '700',
         color: iconColor,
-        letterSpacing: '-0.02em',
       }}>
-        {letter}
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d={iconPath} />
+        </svg>
       </div>
       <h3 style={{
         fontSize: '1rem',
@@ -59,17 +58,23 @@ export default function Home() {
 
   return (
     <main style={{ flex: 1, background: '#f0f2f5' }}>
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2.5rem 2rem 3rem' }}>
+      <div className="home-shell">
 
         {/* ── Hero Card ── */}
-        <div style={{
+        <div className="home-hero" style={{
           background: '#fff',
-          border: '1px solid #e5e7eb',
+          border: 'none',
           borderRadius: '20px',
           padding: '4rem 3rem',
           textAlign: 'center',
           marginBottom: '1.75rem',
         }}>
+          <div className="home-floats" aria-hidden="true">
+            <img className="home-float home-float--countdown" src="/countdown.png" alt="" />
+            <img className="home-float home-float--question" src="/poll.png" alt="" />
+            <img className="home-float home-float--quiz" src="/question.png" alt="" />
+            <img className="home-float home-float--tag" src="/questionsTag.png" alt="" />
+          </div>
           <img 
             src="/logo.png" 
             alt="QuizPortal Logo" 
@@ -149,21 +154,21 @@ export default function Home() {
         {/* ── Features Row ── */}
         <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
           <FeatureCard
-            letter="C"
+            iconPath="M8 4h8l4 4v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"
             iconBg="#eff6ff"
             iconColor="#2563eb"
             title="Create Quizzes"
             description="Teachers build timed MCQ quizzes with full question management in minutes."
           />
           <FeatureCard
-            letter="T"
+            iconPath="M12 6v6l4 2"
             iconBg="#f0fdf4"
             iconColor="#16a34a"
             title="Timed Exams"
             description="Students attempt quizzes with live countdown timers and auto-submit on expiry."
           />
           <FeatureCard
-            letter="R"
+            iconPath="M4 12l5 5L20 6"
             iconBg="#faf5ff"
             iconColor="#7c3aed"
             title="Instant Results"

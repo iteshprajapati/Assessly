@@ -55,6 +55,19 @@ const migrations = [
     FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,
     FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB;`,
+
+  `CREATE TABLE IF NOT EXISTS otp_codes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(100) NOT NULL,
+    otp_hash VARCHAR(255) NOT NULL,
+    purpose ENUM('login','register','reset') NOT NULL DEFAULT 'login',
+    expires_at DATETIME NOT NULL,
+    used TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_otp_email (email),
+    INDEX idx_otp_email_purpose (email, purpose),
+    INDEX idx_otp_expires (expires_at)
   ) ENGINE=InnoDB;`
 ];
 

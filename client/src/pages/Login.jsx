@@ -3,22 +3,36 @@ import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Alert from '../components/Alert';
+import useShakeValidation from '../hooks/useShakeValidation';
 
 export default function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const {
+    fieldErrors,
+    validateRequired,
+    clearFieldError,
+    isShaking,
+  } = useShakeValidation(300);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    clearFieldError(name);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateRequired(formData, {
+      email: 'Email is required.',
+      password: 'Password is required.',
+    })) {
+      return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -54,7 +68,7 @@ export default function Login() {
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-        <form onSubmit={handleSubmit} style={{ marginTop: '1.5rem' }}>
+        <form onSubmit={handleSubmit} style={{ marginTop: '1.5rem' }} noValidate>
           {/* Email */}
           <div style={{ marginBottom: '1.1rem' }}>
             <label style={{ display: 'block', fontWeight: '600', fontSize: '0.8rem', color: '#111827', marginBottom: '0.4rem' }}>
@@ -67,7 +81,7 @@ export default function Login() {
               placeholder="you@example.com"
               value={formData.email}
               onChange={handleChange}
-              required
+              aria-required="true"
               style={{
                 width: '100%',
                 padding: '0.65rem 1rem',
@@ -80,12 +94,15 @@ export default function Login() {
                 boxSizing: 'border-box',
               }}
             />
+            {fieldErrors.email && (
+              <p className="field-error">{fieldErrors.email}</p>
+            )}
           </div>
 
           {/* Password */}
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', fontWeight: '600', fontSize: '0.8rem', color: '#111827', marginBottom: '0.4rem' }}>
-              Password<span style={{ color: '#ef4444', marginLeft: '2px' }}>•</span>
+              Password
             </label>
             <div style={{ position: 'relative' }}>
               <input
@@ -95,7 +112,7 @@ export default function Login() {
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
-                required
+                aria-required="true"
                 style={{
                   width: '100%',
                   padding: '0.65rem 2.5rem 0.65rem 1rem',
@@ -142,12 +159,15 @@ export default function Login() {
                 )}
               </button>
             </div>
+            {fieldErrors.password && (
+              <p className="field-error">{fieldErrors.password}</p>
+            )}
           </div>
 
           {/* Submit */}
           <button
             type="submit"
-            className="hover-black-btn"
+            className={`hover-black-btn ${isShaking ? 'btn-shake' : ''}`}
             disabled={loading}
             style={{
               width: '100%',
@@ -167,14 +187,7 @@ export default function Login() {
             }}
           >
             {loading ? 'Signing in...' : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-                  <polyline points="10 17 15 12 10 7"/>
-                  <line x1="15" x2="3" y1="12" y2="12"/>
-                </svg>
-                Sign In
-              </>
+              'Sign In'
             )}
           </button>
         </form>
