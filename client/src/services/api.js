@@ -9,6 +9,11 @@ const api = axios.create({
   },
 });
 
+// Create a separate instance for multipart/form-data (file uploads)
+const fileApi = axios.create({
+  baseURL: API_URL,
+});
+
 // Add token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
@@ -18,8 +23,28 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+fileApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // Handle errors
 api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+fileApi.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
@@ -62,10 +87,59 @@ export const quizAPI = {
 
 // Question APIs
 export const questionAPI = {
-  addQuestion: (data) => api.post('/questions', data),
+  addMCQQuestion: (data) => {
+    const formData = new FormData();
+    formData.append('quizId', data.quizId);
+    formData.append('question', data.question);
+    formData.append('topic', data.topic || 'General');
+    formData.append('option1', data.option1);
+    formData.append('option2', data.option2);
+    formData.append('option3', data.option3);
+    formData.append('option4', data.option4);
+    formData.append('correctOption', data.correctOption);
+    formData.append('points', data.points || 1);
+    if (data.image) {
+      formData.append('image', data.image);
+    }
+    return fileApi.post('/questions/mcq', formData);
+  },
+  addDescriptiveQuestion: (data) => {
+    const formData = new FormData();
+    formData.append('quizId', data.quizId);
+    formData.append('question', data.question);
+    formData.append('topic', data.topic || 'General');
+    formData.append('points', data.points || 1);
+    if (data.image) {
+      formData.append('image', data.image);
+    }
+    return fileApi.post('/questions/descriptive', formData);
+  },
+  addQuestion: (data) => api.post('/questions', data), // Keep for backward compatibility
   getQuestions: (quizId) => api.get(`/questions/${quizId}`),
   updateQuestion: (id, data) => api.patch(`/questions/${id}`, data),
   deleteQuestion: (id) => api.delete(`/questions/${id}`),
+};
+
+// Descriptive Answer APIs
+export const answerAPI = {
+  submitAnswer: (data) => {
+    const formData = new FormData();
+    formData.append('quizId', data.quizId);
+    formData.append('questionId', data.questionId);
+    formData.append('answerText', data.answerText);
+    if (data.image) {
+      formData.append('image', data.image);
+    }
+    return fileApi.post('/answers/submit', formData);
+  },
+  getStudentAnswers: (quizId) => api.get(`/answers/student/${quizId}`),
+  getUngradedAnswers: (quizId) => api.get(`/answers/ungraded/${quizId}`),
+  getAnswerForGrading: (answerId) => api.get(`/answers/grade/${answerId}`),
+  gradeAnswer: (answerId, data) => api.patch(`/answers/grade/${answerId}`, data),
+  addPresetAnswer: (data) => api.post('/answers/preset', data),
+  getPresetAnswers: (questionId) => api.get(`/answers/preset/${questionId}`),
+  updatePresetAnswer: (presetAnswerId, data) => api.patch(`/answers/preset/${presetAnswerId}`, data),
+  deletePresetAnswer: (presetAnswerId) => api.delete(`/answers/preset/${presetAnswerId}`),
 };
 
 // Result APIs

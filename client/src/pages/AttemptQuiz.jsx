@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { quizAPI, resultAPI } from '../services/api';
+import { quizAPI, resultAPI, answerAPI } from '../services/api';
 import QuizTimer from '../components/QuizTimer';
 import Alert from '../components/Alert';
+import { Image as ImageIcon } from 'lucide-react';
 
 export default function AttemptQuiz() {
   const { quizId } = useParams();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [quiz, setQuiz] = useState(null);
   const [answers, setAnswers] = useState({});
+  const [descriptiveAnswers, setDescriptiveAnswers] = useState({});
+  const [descriptiveImages, setDescriptiveImages] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -72,8 +76,30 @@ export default function AttemptQuiz() {
     }
   };
 
-  const handleAnswerChange = (questionId, option) => {
+  const handleMCQAnswerChange = (questionId, option) => {
     setAnswers((prev) => ({ ...prev, [questionId]: option }));
+  };
+
+  const handleDescriptiveAnswerChange = (questionId, text) => {
+    setDescriptiveAnswers((prev) => ({ ...prev, [questionId]: text }));
+  };
+
+  const handleDescriptiveImageChange = (questionId, e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size must be less than 5MB');
+        return;
+      }
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+      if (!validTypes.includes(file.type)) {
+        setError('Only JPG, PNG, and PDF files are allowed');
+        return;
+      }
+      setDescriptiveImages((prev) => ({ ...prev, [questionId]: file }));
+    }
   };
 
   const handleTimeUp = () => {
@@ -85,10 +111,24 @@ export default function AttemptQuiz() {
       if (submitInProgressRef.current) return;
       submitInProgressRef.current = true;
       setSubmitting(true);
+
+      // Submit MCQ answers
       const response = await resultAPI.submitQuiz({
         quizId: parseInt(quizId),
         answers,
       });
+
+      // Submit descriptive answers
+      for (const [questionId, answerText] of Object.entries(descriptiveAnswers)) {
+        if (answerText || descriptiveImages[questionId]) {
+          await answerAPI.submitAnswer({
+            quizId: parseInt(quizId),
+            questionId: parseInt(questionId),
+            answerText,
+            image: descriptiveImages[questionId],
+          });
+        }
+      }
 
       const { resultId } = response.data;
       localStorage.removeItem(`quizTabSwitchCount:${quizId}`);
@@ -122,6 +162,34 @@ export default function AttemptQuiz() {
     );
   }
 
+  if (!hasStarted) {
+    return (
+      <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="card" style={{ maxWidth: '500px', width: '100%', margin: '2rem' }}>
+          <div className="card-body" style={{ textAlign: 'center', padding: '2rem' }}>
+            <h2 style={{ marginBottom: '1rem' }}>{quiz?.title}</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+              {quiz?.description}
+            </p>
+            <p style={{ marginBottom: '1.5rem', fontSize: '0.95rem' }}>
+              <strong>Total Questions:</strong> {quiz?.questions?.length} <br />
+              <strong>Time Limit:</strong> {quiz?.time_limit} minutes
+            </p>
+            <button
+              className="btn btn-primary"
+              onClick={() => setHasStarted(true)}
+              style={{ width: '100%' }}
+            >
+              Start Quiz
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const currentQuestion = quiz?.questions?.[currentIndex];
+
   return (
     <main style={{ flex: 1 }}>
       <div style={{
@@ -138,7 +206,7 @@ export default function AttemptQuiz() {
             <div>
               <h1 style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>{quiz?.title}</h1>
               <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                {quiz?.questions?.length} Questions
+                Question {currentIndex + 1} of {quiz?.questions?.length}
               </span>
             </div>
             {hasStarted && (
@@ -162,36 +230,205 @@ export default function AttemptQuiz() {
           <form onSubmit={(e) => { e.preventDefault(); submitQuiz(); }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: '1.5rem' }}>
               <div>
-                {quiz?.questions?.length ? (
-                  <div className="question-card">
-                    <div className="question-number">Question {currentIndex + 1}</div>
-                    <div className="question-text">{quiz.questions[currentIndex].question}</div>
+                {currentQuestion ? (
+                  <div className="card">
+                    <div className="card-body">
+                      {/* Question type badge */}
+                      <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <span style={{
+                          fontWeight: '600',
+                          fontSize: '0.75rem',
+                          color: currentQuestion.type === 'MCQ' ? '#1f2937' : '#059669',
+                          background: currentQuestion.type === 'MCQ' ? '#f0f0f0' : '#d1fae5',
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '999px',
+                        }}>
+                          {currentQuestion.type}
+                        </span>
+                        {currentQuestion.points && (
+                          <span style={{
+                            fontWeight: '500',
+                            fontSize: '0.75rem',
+                            color: '#6b7280',
+                            background: '#f3f4f6',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '999px',
+                          }}>
+                            {currentQuestion.points} points
+                          </span>
+                        )}
+                      </div>
 
-                    <div style={{ marginTop: '1rem' }}>
-                      {[1, 2, 3, 4].map((optionNum) => {
-                        const optionKey = `option${optionNum}`;
-                        const question = quiz.questions[currentIndex];
-                        const isSelected = answers[question.id] === optionNum;
-                        return (
-                          <label
-                            key={optionNum}
-                            className={`option ${isSelected ? 'selected' : ''}`}
-                          >
-                            <input
-                              type="radio"
-                              name={`question-${question.id}`}
-                              value={optionNum}
-                              checked={isSelected}
-                              onChange={() => handleAnswerChange(question.id, optionNum)}
-                            />
-                            {question[optionKey]}
+                      {/* Question Image */}
+                      {currentQuestion.image_path && (
+                        <div style={{ marginBottom: '1rem' }}>
+                          <img
+                            src={currentQuestion.image_path}
+                            alt="Question"
+                            style={{
+                              maxWidth: '100%',
+                              maxHeight: '300px',
+                              borderRadius: '8px',
+                              objectFit: 'contain'
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Question text */}
+                      <div className="question-text" style={{ marginBottom: '1.5rem', fontSize: '1.05rem', fontWeight: '500' }}>
+                        {currentQuestion.question}
+                      </div>
+
+                      {/* MCQ Options */}
+                      {currentQuestion.type === 'MCQ' && (
+                        <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                          {[1, 2, 3, 4].map((optionNum) => {
+                            const optionKey = `option${optionNum}`;
+                            const isSelected = answers[currentQuestion.id] === optionNum;
+                            return (
+                              <label
+                                key={optionNum}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  padding: '1rem',
+                                  border: isSelected ? '2px solid #6366f1' : '1px solid #e5e7eb',
+                                  borderRadius: '8px',
+                                  background: isSelected ? '#eef2ff' : '#ffffff',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!isSelected) {
+                                    e.currentTarget.style.borderColor = '#d1d5db';
+                                    e.currentTarget.style.background = '#f9fafb';
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!isSelected) {
+                                    e.currentTarget.style.borderColor = '#e5e7eb';
+                                    e.currentTarget.style.background = '#ffffff';
+                                  }
+                                }}
+                              >
+                                <input
+                                  type="radio"
+                                  name={`question-${currentQuestion.id}`}
+                                  value={optionNum}
+                                  checked={isSelected}
+                                  onChange={() => handleMCQAnswerChange(currentQuestion.id, optionNum)}
+                                  style={{ marginRight: '0.75rem', cursor: 'pointer' }}
+                                />
+                                <span style={{
+                                  fontWeight: isSelected ? '600' : '400',
+                                  color: isSelected ? '#6366f1' : 'inherit'
+                                }}>
+                                  {currentQuestion[optionKey]}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Descriptive Answer */}
+                      {currentQuestion.type === 'DESCRIPTIVE' && (
+                        <div style={{ marginTop: '1rem' }}>
+                          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                            Your Answer
                           </label>
-                        );
-                      })}
+                          <textarea
+                            value={descriptiveAnswers[currentQuestion.id] || ''}
+                            onChange={(e) => handleDescriptiveAnswerChange(currentQuestion.id, e.target.value)}
+                            placeholder="Type your answer here..."
+                            rows="6"
+                            style={{
+                              width: '100%',
+                              padding: '1rem',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '8px',
+                              fontSize: '0.95rem',
+                              fontFamily: 'inherit',
+                              boxSizing: 'border-box',
+                              resize: 'vertical'
+                            }}
+                          />
+
+                          {/* Image upload for descriptive */}
+                          <div style={{ marginTop: '1rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                              Upload supporting image (Optional)
+                            </label>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: '1rem',
+                              border: '2px dashed #e5e7eb',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              background: '#f9fafb',
+                              transition: 'all 0.2s',
+                            }}
+                              onClick={() => fileInputRef.current?.click()}
+                            >
+                              <div style={{ textAlign: 'center' }}>
+                                <ImageIcon size={24} style={{ color: '#9ca3af', marginBottom: '0.5rem' }} />
+                                <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+                                  Click to select image
+                                </div>
+                              </div>
+                            </div>
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/jpeg,image/png,application/pdf"
+                              onChange={(e) => handleDescriptiveImageChange(currentQuestion.id, e)}
+                              style={{ display: 'none' }}
+                            />
+                            {descriptiveImages[currentQuestion.id] && (
+                              <div style={{
+                                marginTop: '0.75rem',
+                                padding: '0.5rem',
+                                background: '#d1fae5',
+                                borderRadius: '6px',
+                                fontSize: '0.85rem',
+                                color: '#059669',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                              }}>
+                                <span>✓ {descriptiveImages[currentQuestion.id].name}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDescriptiveImages((prev) => {
+                                      const updated = { ...prev };
+                                      delete updated[currentQuestion.id];
+                                      return updated;
+                                    });
+                                    if (fileInputRef.current) fileInputRef.current.value = '';
+                                  }}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#dc2626',
+                                    cursor: 'pointer',
+                                    fontSize: '0.9rem',
+                                  }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
-                  <Alert type="error" message="No questions available for this quiz." />
+                  <Alert type="error" message="No question available." />
                 )}
 
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
@@ -222,13 +459,16 @@ export default function AttemptQuiz() {
                 </div>
               </div>
 
+              {/* Question Navigator */}
               <div>
                 <div className="card" style={{ position: 'sticky', top: '5.5rem' }}>
-                  <div className="card-header">Question Navigator</div>
+                  <div className="card-header">Questions</div>
                   <div className="card-body">
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
                       {quiz?.questions?.map((question, index) => {
-                        const isAnswered = answers[question.id] !== undefined;
+                        const isAnswered = question.type === 'MCQ'
+                          ? answers[question.id] !== undefined
+                          : descriptiveAnswers[question.id];
                         const isActive = index === currentIndex;
                         return (
                           <button
@@ -242,16 +482,29 @@ export default function AttemptQuiz() {
                               background: isAnswered ? '#f0fdf4' : '#f9fafb',
                               color: 'var(--text-dark)',
                               fontWeight: isActive ? 700 : 600,
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              fontSize: '0.8rem'
                             }}
+                            title={question.type}
                           >
                             {index + 1}
                           </button>
                         );
                       })}
                     </div>
-                    <div style={{ marginTop: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      Green indicates answered questions.
+                    <div style={{
+                      marginTop: '1rem',
+                      paddingTop: '1rem',
+                      borderTop: '1px solid var(--border)',
+                      fontSize: '0.8rem',
+                      color: 'var(--text-muted)'
+                    }}>
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <span style={{ color: '#f0fdf4', background: '#10b981', padding: '0.2rem 0.4rem', borderRadius: '4px' }}>■</span> Answered
+                      </div>
+                      <div>
+                        <span style={{ color: '#f9fafb', background: '#d1d5db', padding: '0.2rem 0.4rem', borderRadius: '4px' }}>■</span> Not answered
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -260,59 +513,6 @@ export default function AttemptQuiz() {
           </form>
         </div>
       </div>
-
-      {!hasStarted && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(15, 23, 42, 0.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1rem'
-          }}
-        >
-          <div
-            className="card"
-            style={{
-              maxWidth: '640px',
-              width: '100%',
-              boxShadow: 'var(--shadow-md)'
-            }}
-          >
-            <div className="card-body" style={{ padding: '2rem' }}>
-              <h2 style={{ marginTop: 0, marginBottom: '0.75rem' }}>Before You Start</h2>
-              <p style={{ color: 'var(--text-muted)', marginTop: 0 }}>
-                Please read the instructions carefully. The timer will start once you proceed.
-              </p>
-              <ul style={{ paddingLeft: '1.25rem', marginBottom: '1.5rem', color: 'var(--text-body)' }}>
-                <li>Do not refresh or close the tab during the quiz.</li>
-                <li>Tab switching is monitored and limited.</li>
-                <li>Each quiz can be submitted only once.</li>
-                <li>Make sure your answers are final before submitting.</li>
-              </ul>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary"
-                  onClick={() => navigate('/student')}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setHasStarted(true)}
-                >
-                  Proceed to Start
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

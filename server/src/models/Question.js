@@ -1,11 +1,22 @@
 const pool = require('../config/database');
 
 class QuestionModel {
-  static async create(quizId, question, topic, option1, option2, option3, option4, correctOption) {
+  // Create MCQ question
+  static async create(quizId, question, topic, type, points, imagePath, option1, option2, option3, option4, correctOption) {
     const [result] = await pool.query(
-      `INSERT INTO questions (quiz_id, question, topic, option1, option2, option3, option4, correct_option)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [quizId, question, topic, option1, option2, option3, option4, correctOption]
+      `INSERT INTO questions (quiz_id, question, topic, type, points, image_path, option1, option2, option3, option4, correct_option)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [quizId, question, topic, type || 'MCQ', points || 1, imagePath || null, option1, option2, option3, option4, correctOption]
+    );
+    return result.insertId;
+  }
+
+  // Create Descriptive question
+  static async createDescriptive(quizId, question, topic, points, imagePath) {
+    const [result] = await pool.query(
+      `INSERT INTO questions (quiz_id, question, topic, type, points, image_path)
+       VALUES (?, ?, ?, 'DESCRIPTIVE', ?, ?)`,
+      [quizId, question, topic, points || 1, imagePath || null]
     );
     return result.insertId;
   }
@@ -25,7 +36,7 @@ class QuestionModel {
 
   static async getByQuizWithoutAnswers(quizId) {
     const [rows] = await pool.query(
-      `SELECT id, quiz_id, question, option1, option2, option3, option4 
+      `SELECT id, quiz_id, question, type, points, image_path, topic, option1, option2, option3, option4 
        FROM questions 
        WHERE quiz_id = ? 
        ORDER BY id ASC`,
@@ -34,11 +45,28 @@ class QuestionModel {
     return rows;
   }
 
-  static async update(id, question, topic, option1, option2, option3, option4, correctOption) {
+  static async update(id, question, topic, points, imagePath, option1, option2, option3, option4, correctOption) {
+    // For MCQ questions
+    if (option1 && correctOption) {
+      await pool.query(
+        `UPDATE questions SET question = ?, topic = ?, points = ?, image_path = ?, option1 = ?, option2 = ?, option3 = ?, option4 = ?, correct_option = ? 
+         WHERE id = ?`,
+        [question, topic, points || 1, imagePath || null, option1, option2, option3, option4, correctOption, id]
+      );
+    } else {
+      // For descriptive questions
+      await pool.query(
+        `UPDATE questions SET question = ?, topic = ?, points = ?, image_path = ? 
+         WHERE id = ?`,
+        [question, topic, points || 1, imagePath || null, id]
+      );
+    }
+  }
+
+  static async updateImage(id, imagePath) {
     await pool.query(
-      `UPDATE questions SET question = ?, topic = ?, option1 = ?, option2 = ?, option3 = ?, option4 = ?, correct_option = ? 
-       WHERE id = ?`,
-      [question, topic, option1, option2, option3, option4, correctOption, id]
+      `UPDATE questions SET image_path = ? WHERE id = ?`,
+      [imagePath, id]
     );
   }
 
@@ -48,6 +76,22 @@ class QuestionModel {
 
   static async deleteByQuiz(quizId) {
     await pool.query('DELETE FROM questions WHERE quiz_id = ?', [quizId]);
+  }
+
+  static async getDescriptiveByQuiz(quizId) {
+    const [rows] = await pool.query(
+      `SELECT * FROM questions WHERE quiz_id = ? AND type = 'DESCRIPTIVE' ORDER BY id ASC`,
+      [quizId]
+    );
+    return rows;
+  }
+
+  static async getMCQByQuiz(quizId) {
+    const [rows] = await pool.query(
+      `SELECT * FROM questions WHERE quiz_id = ? AND type = 'MCQ' ORDER BY id ASC`,
+      [quizId]
+    );
+    return rows;
   }
 }
 
