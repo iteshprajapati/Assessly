@@ -10,12 +10,19 @@ exports.createQuiz = [
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ 
+        error: errors.array().map(e => e.msg).join('; '),
+        errors: errors.array() 
+      });
     }
 
     try {
       const { title, description, timeLimit } = req.body;
-      const teacherId = req.user.userId;
+      const teacherId = req.user?.userId;
+
+      if (!teacherId) {
+        return res.status(401).json({ error: 'Unauthorized: User ID not found' });
+      }
 
       const quizId = await QuizModel.create(teacherId, title, description || '', timeLimit);
 
@@ -25,7 +32,8 @@ exports.createQuiz = [
         quizId,
       });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      console.error('Error creating quiz:', error);
+      res.status(500).json({ error: error.message || 'Failed to create quiz' });
     }
   },
 ];

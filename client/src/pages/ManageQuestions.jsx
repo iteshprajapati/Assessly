@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { questionAPI, quizAPI } from '../services/api';
 import Alert from '../components/Alert';
-import { Edit2, Trash2, X, Image as ImageIcon } from 'lucide-react';
+import ExtractQuestionsFromImage from '../components/ExtractQuestionsFromImage';
+import { Edit2, Trash2, X, Image as ImageIcon, Camera } from 'lucide-react';
 
 export default function ManageQuestions() {
   const { quizId } = useParams();
@@ -12,6 +13,7 @@ export default function ManageQuestions() {
   const [questions, setQuestions] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showOCRModal, setShowOCRModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -212,6 +214,51 @@ export default function ManageQuestions() {
     }
   };
 
+  const handleBulkInsertFromOCR = async (extractedQuestions) => {
+    try {
+      setSaving(true);
+      setError('');
+      setSuccess('');
+      
+      let successCount = 0;
+      let failureCount = 0;
+
+      for (const q of extractedQuestions) {
+        try {
+          const submitData = {
+            topic: q.topic || 'General',
+            question: q.question,
+            points: q.marks || 1,
+            quizId: parseInt(quizId),
+          };
+
+          if (q.type === 'MCQ' && q.options && q.options.length >= 2) {
+            submitData.option1 = q.options[0]?.text || '';
+            submitData.option2 = q.options[1]?.text || '';
+            submitData.option3 = q.options[2]?.text || '';
+            submitData.option4 = q.options[3]?.text || '';
+            submitData.correctOption = q.options.findIndex(opt => opt.isCorrect) + 1 || 1;
+            await questionAPI.addMCQQuestion(submitData);
+          } else {
+            await questionAPI.addDescriptiveQuestion(submitData);
+          }
+          successCount++;
+        } catch (err) {
+          failureCount++;
+          console.error('Failed to insert question:', err);
+        }
+      }
+
+      setSuccess(`Successfully imported ${successCount} question(s)${failureCount > 0 ? ` (${failureCount} failed)` : ''}!`);
+      setShowOCRModal(false);
+      loadData();
+    } catch (err) {
+      setError('Error importing questions from image. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <main style={{ flex: 1 }}>
@@ -249,14 +296,84 @@ export default function ManageQuestions() {
               {descriptiveCount > 0 && ` · ${descriptiveCount} Descriptive`}
             </p>
           </div>
-          <Link to="/teacher" className="btn btn-outline-secondary btn-sm">
-            ← Back to Dashboard
-          </Link>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowOCRModal(true)}
+              className="btn btn-secondary btn-sm"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              title="Upload image to extract questions"
+            >
+              <Camera size={16} />
+              Extract from Image
+            </button>
+            <Link to="/teacher" className="btn btn-outline-secondary btn-sm">
+              ← Back to Dashboard
+            </Link>
+          </div>
         </div>
 
         {/* ── Alerts ── */}
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
         {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
+
+        {/* ── OCR Modal ── */}
+        {showOCRModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+            padding: '1rem',
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              maxWidth: '900px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '1.5rem',
+                borderBottom: '1px solid #e5e7eb',
+                position: 'sticky',
+                top: 0,
+                backgroundColor: 'white',
+              }}>
+                <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Import Questions from Image</h2>
+                <button
+                  onClick={() => setShowOCRModal(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '1.5rem',
+                    cursor: 'pointer',
+                    color: '#6b7280',
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div style={{ padding: '1.5rem' }}>
+                <ExtractQuestionsFromImage
+                  quizId={quizId}
+                  onQuestionsExtracted={handleBulkInsertFromOCR}
+                  onCancel={() => setShowOCRModal(false)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Two-Column Layout ── */}
         <div style={{

@@ -27,10 +27,32 @@ export default function CreateQuiz() {
     setLoading(true);
 
     try {
+      // Validate form
+      if (!formData.title.trim()) {
+        throw new Error('Quiz title is required');
+      }
+      if (formData.timeLimit < 1 || formData.timeLimit > 300) {
+        throw new Error('Time limit must be between 1 and 300 minutes');
+      }
+
       const response = await quizAPI.createQuiz(formData);
       navigate(`/teacher/quiz/${response.data.quizId}/questions`);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create quiz');
+      // Handle validation errors from backend
+      let errorMsg = 'Failed to create quiz';
+      
+      if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
+        // Multiple validation errors
+        errorMsg = err.response.data.errors.map(e => e.msg).join(', ');
+      } else if (err.response?.data?.error) {
+        // Single error message
+        errorMsg = err.response.data.error;
+      } else if (err.message) {
+        // Client-side error
+        errorMsg = err.message;
+      }
+      
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
