@@ -89,6 +89,7 @@
 .register-submit-btn {
   width: 100%;
   padding: 0.75rem;
+  background-color: #374151;
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -97,9 +98,14 @@
   @include flex-center;
   gap: 0.5rem;
   transition: background-color 0.2s;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background-color: #4b5563;
+  }
 
   &:disabled {
-    background-color: #374151 !important;
+    background-color: #1f2937 !important;
     cursor: not-allowed;
   }
 }

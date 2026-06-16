@@ -313,7 +313,7 @@ export default function Register() {
               {!otpRequested && (
                 <button
                   type="submit"
-                  className={`register-submit-btn hover-black-btn ${isShaking ? 'btn-shake' : ''}`}
+                  className={`register-submit-btn ${isShaking ? 'btn-shake' : ''}`}
                   disabled={loading}
                 >
                   {loading ? 'Sending OTP...' : 'Continue'}
@@ -360,7 +360,7 @@ export default function Register() {
 
                   <button
                     type="submit"
-                    className={`register-submit-btn hover-black-btn ${isShaking ? 'btn-shake' : ''}`}
+                    className={`register-submit-btn ${isShaking ? 'btn-shake' : ''}`}
                     disabled={loading}
                   >
                     {loading ? 'Verifying...' : 'Verify OTP & Create Account'}

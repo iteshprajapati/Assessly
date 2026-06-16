@@ -134,7 +134,7 @@ export default function Login() {
           {/* Submit */}
           <button
             type="submit"
-            className={`login-submit-btn hover-black-btn ${isShaking ? 'btn-shake' : ''}`}
+            className={`login-submit-btn ${isShaking ? 'btn-shake' : ''}`}
             disabled={loading}
           >
             {loading ? 'Signing in...' : 'Sign In'}
