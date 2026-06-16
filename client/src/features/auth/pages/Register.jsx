@@ -9,7 +9,8 @@ import '../styles/Register.scss';
 export default function Register() {
   const OTP_LENGTH = 6;
   const OTP_RESEND_SECONDS = 120;
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', username: '', password: '', role: '' });
+  const [usernameStatus, setUsernameStatus] = useState({ available: null, loading: false, error: '' });
   const [otpDigits, setOtpDigits] = useState(Array(OTP_LENGTH).fill(''));
   const [otpRequested, setOtpRequested] = useState(false);
   const [otpTouched, setOtpTouched] = useState(false);
@@ -51,11 +52,19 @@ export default function Register() {
     e.preventDefault();
     if (!otpRequested && !validateRequired(formData, {
       name: 'Full name is required.',
+      username: 'Username is required.',
       email: 'Email is required.',
       password: 'Password is required.',
       role: 'Please select a role.',
     })) {
       return;
+    }
+    if (!otpRequested) {
+      if (formData.username && !/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+        setFieldErrors((prev) => ({ ...prev, username: 'Username can only contain letters, numbers, and underscores.' }));
+        triggerShake();
+        return;
+      }
     }
     setError('');
     setMessage('');
@@ -164,6 +173,38 @@ export default function Register() {
     }
   }, [otpRequested, isOtpComplete, loading, autoSubmitLocked]);
 
+  useEffect(() => {
+    const username = formData.username.trim();
+    if (username.length < 3) {
+      setUsernameStatus({ available: null, loading: false, error: '' });
+      return;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      setUsernameStatus({ available: null, loading: false, error: 'Only letters, numbers, and underscores are allowed.' });
+      return;
+    }
+
+    setUsernameStatus({ available: null, loading: true, error: '' });
+    const timer = setTimeout(async () => {
+      try {
+        const response = await authAPI.checkUsername(username);
+        if (response.data.available) {
+          setUsernameStatus({ available: true, loading: false, error: '' });
+        } else {
+          setUsernameStatus({ available: false, loading: false, error: 'Username is already taken.' });
+        }
+      } catch (err) {
+        setUsernameStatus({ 
+          available: false, 
+          loading: false, 
+          error: err.response?.data?.error || 'Failed to check availability.' 
+        });
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [formData.username]);
+
   return (
     <main className="register-main">
       <div className="register-shell">
@@ -202,6 +243,41 @@ export default function Register() {
                 />
                 {fieldErrors.name && (
                   <p className="field-error">{fieldErrors.name}</p>
+                )}
+              </div>
+
+              {/* Username */}
+              <div className="register-form-group">
+                <label className="register-label">Username</label>
+                <input
+                  type="text"
+                  name="username"
+                  placeholder="johndoe"
+                  value={formData.username}
+                  onChange={handleChange}
+                  aria-required="true"
+                  className="register-input auth-input"
+                />
+                {usernameStatus.loading && (
+                  <p className="username-hint" style={{ color: 'var(--text-muted, #6b7280)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem', margin: '0.25rem 0 0 0' }}>
+                    Checking availability...
+                  </p>
+                )}
+                {!usernameStatus.loading && usernameStatus.available === true && (
+                  <p className="username-hint" style={{ color: '#16a34a', fontSize: '0.8rem', fontWeight: '600', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem', margin: '0.25rem 0 0 0' }}>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px' }}>
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Username is available
+                  </p>
+                )}
+                {!usernameStatus.loading && usernameStatus.error && (
+                  <p className="username-hint" style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '0.25rem', margin: '0.25rem 0 0 0' }}>
+                    {usernameStatus.error}
+                  </p>
+                )}
+                {fieldErrors.username && !usernameStatus.error && (
+                  <p className="field-error">{fieldErrors.username}</p>
                 )}
               </div>
 

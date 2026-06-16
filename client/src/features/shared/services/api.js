@@ -62,6 +62,7 @@ export const authAPI = {
   login: (data) => api.post('/auth/login', data),
   requestOtp: (data) => api.post('/auth/otp/request', data),
   verifyOtp: (data) => api.post('/auth/otp/verify', data),
+  checkUsername: (username) => api.get(`/auth/check-username/${username}`),
   getCurrentUser: () => api.get('/auth/me'),
 };
 

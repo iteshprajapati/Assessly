@@ -24,7 +24,14 @@ export default function Navbar() {
             <>
               <span className="user-avatar">{user?.name?.charAt(0).toUpperCase()}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span className="fw-600">{user?.name}</span>
+                <span className="fw-600">
+                  {user?.name} 
+                  {user?.username && (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 'normal', marginLeft: '0.35rem' }}>
+                      @{user?.username}
+                    </span>
+                  )}
+                </span>
                 <span className="role-badge" style={{ marginLeft: '0.25rem' }}>
                   {user?.role}
                 </span>

@@ -5,6 +5,7 @@ const tables = {
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
+    username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     role ENUM('admin','teacher','student') DEFAULT 'student',
     status ENUM('active','inactive') DEFAULT 'active',
@@ -159,6 +160,29 @@ async function runMigrations() {
 
     // Create tables in order
     await connection.query(tables.users);
+
+    // Check if username column exists in users table
+    const [cols] = await connection.query("SHOW COLUMNS FROM users LIKE 'username'");
+    if (cols.length === 0) {
+      console.log('⚠ Migration: Adding username column to users table...');
+      // 1. Add it as nullable unique column first
+      await connection.query("ALTER TABLE users ADD COLUMN username VARCHAR(50) NULL UNIQUE");
+      
+      // 2. Populate default usernames for existing users based on email
+      const [existingUsers] = await connection.query("SELECT id, email FROM users");
+      for (const u of existingUsers) {
+        const emailPrefix = u.email.split('@')[0];
+        const cleanPrefix = emailPrefix.replace(/[^a-zA-Z0-9_]/g, '');
+        // Append ID to ensure uniqueness
+        const defaultUsername = `${cleanPrefix}_${u.id}`;
+        await connection.query("UPDATE users SET username = ? WHERE id = ?", [defaultUsername, u.id]);
+      }
+      
+      // 3. Make the column NOT NULL
+      await connection.query("ALTER TABLE users MODIFY COLUMN username VARCHAR(50) NOT NULL UNIQUE");
+      console.log('✓ Migration: Added and populated username column successfully');
+    }
+
     await connection.query(tables.quizzes);
     await connection.query(tables.questions);
     await connection.query(tables.quiz_questions);

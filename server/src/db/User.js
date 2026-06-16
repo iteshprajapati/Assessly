@@ -9,24 +9,40 @@ class UserModel {
     return rows[0] || null;
   }
 
+  static async findByUsername(username) {
+    const [rows] = await pool.query(
+      'SELECT * FROM users WHERE username = ? LIMIT 1',
+      [username]
+    );
+    return rows[0] || null;
+  }
+
+  static async findByEmailOrUsername(loginId) {
+    const [rows] = await pool.query(
+      'SELECT * FROM users WHERE email = ? OR username = ? LIMIT 1',
+      [loginId, loginId]
+    );
+    return rows[0] || null;
+  }
+
   static async findById(id) {
     const [rows] = await pool.query(
-      'SELECT id, name, email, role, status, created_at FROM users WHERE id = ? LIMIT 1',
+      'SELECT id, name, email, username, role, status, created_at FROM users WHERE id = ? LIMIT 1',
       [id]
     );
     return rows[0] || null;
   }
 
-  static async create(name, email, password, role = 'student') {
+  static async create(name, email, password, role = 'student', username) {
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role, status) VALUES (?, ?, ?, ?, "active")',
-      [name, email, password, role]
+      'INSERT INTO users (name, email, password, role, status, username) VALUES (?, ?, ?, ?, "active", ?)',
+      [name, email, password, role, username]
     );
     return result.insertId;
   }
 
   static async getAll(role = null, status = null, search = null) {
-    let query = 'SELECT id, name, email, role, status, created_at FROM users WHERE role != "admin"';
+    let query = 'SELECT id, name, email, username, role, status, created_at FROM users WHERE role != "admin"';
     const params = [];
 
     if (role) {
@@ -38,8 +54,8 @@ class UserModel {
       params.push(status);
     }
     if (search) {
-      query += ' AND (name LIKE ? OR email LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`);
+      query += ' AND (name LIKE ? OR email LIKE ? OR username LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     query += ' ORDER BY created_at DESC';

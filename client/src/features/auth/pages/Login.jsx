@@ -29,7 +29,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateRequired(formData, {
-      email: 'Email is required.',
+      email: 'Email or Username is required.',
       password: 'Password is required.',
     })) {
       return;
@@ -70,16 +70,16 @@ export default function Login() {
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
         <form onSubmit={handleSubmit} className="login-form" noValidate>
-          {/* Email */}
+          {/* Email or Username */}
           <div className="login-form-group">
             <label className="login-label">
-              Email Address
+              Email or Username
             </label>
             <input
-              type="email"
+              type="text"
               name="email"
               className="login-input auth-input"
-              placeholder="you@example.com"
+              placeholder="you@example.com or username"
               value={formData.email}
               onChange={handleChange}
               aria-required="true"

@@ -15,6 +15,12 @@ const {
 exports.register = [
   body('name').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
   body('email').isEmail().withMessage('Please enter a valid email'),
+  body('username')
+    .trim()
+    .isLength({ min: 3 })
+    .withMessage('Username must be at least 3 characters')
+    .matches(/^[a-zA-Z0-9_]+$/)
+    .withMessage('Username can only contain letters, numbers, and underscores'),
   body('password')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters')
@@ -31,7 +37,7 @@ exports.register = [
     }
 
     try {
-      const { name, email, password, role } = req.body;
+      const { name, email, password, role, username } = req.body;
 
       // Check if email exists
       const existingUser = await UserModel.findByEmail(email);
@@ -39,9 +45,15 @@ exports.register = [
         return res.status(409).json({ error: 'Email already registered' });
       }
 
+      // Check if username exists
+      const existingUsername = await UserModel.findByUsername(username);
+      if (existingUsername) {
+        return res.status(409).json({ error: 'Username already taken' });
+      }
+
       // Hash password and create user
       const hashedPassword = await hashPassword(password);
-      const userId = await UserModel.create(name, email, hashedPassword, role);
+      const userId = await UserModel.create(name, email, hashedPassword, role, username);
 
       // Generate token
       const token = generateToken(userId, role);
@@ -50,7 +62,7 @@ exports.register = [
         success: true,
         message: 'Account created successfully',
         token,
-        user: { id: userId, name, email, role },
+        user: { id: userId, name, email, username, role },
       });
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -59,7 +71,7 @@ exports.register = [
 ];
 
 exports.login = [
-  body('email').isEmail().withMessage('Please enter a valid email'),
+  body('email').notEmpty().withMessage('Email or Username is required'),
   body('password').notEmpty().withMessage('Password is required'),
 
   async (req, res) => {
@@ -71,16 +83,16 @@ exports.login = [
     try {
       const { email, password } = req.body;
 
-      // Find user
-      const user = await UserModel.findByEmail(email);
+      // Find user by email or username
+      const user = await UserModel.findByEmailOrUsername(email);
       if (!user) {
-        return res.status(401).json({ error: 'Invalid email or password' });
+        return res.status(401).json({ error: 'Invalid email, username or password' });
       }
 
       // Check password
       const isMatch = await verifyPassword(password, user.password);
       if (!isMatch) {
-        return res.status(401).json({ error: 'Invalid email or password' });
+        return res.status(401).json({ error: 'Invalid email, username or password' });
       }
 
       // Check status
@@ -99,6 +111,7 @@ exports.login = [
           id: user.id,
           name: user.name,
           email: user.email,
+          username: user.username,
           role: user.role,
         },
       });
@@ -146,6 +159,12 @@ exports.requestOtp = [
 exports.verifyOtpRegister = [
   body('name').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
   body('email').isEmail().withMessage('Please enter a valid email'),
+  body('username')
+    .trim()
+    .isLength({ min: 3 })
+    .withMessage('Username must be at least 3 characters')
+    .matches(/^[a-zA-Z0-9_]+$/)
+    .withMessage('Username can only contain letters, numbers, and underscores'),
   body('password')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters')
@@ -167,7 +186,7 @@ exports.verifyOtpRegister = [
     }
 
     try {
-      const { name, password, role } = req.body;
+      const { name, password, role, username } = req.body;
       const email = String(req.body.email).toLowerCase();
       const purpose = req.body.purpose || 'register';
       const otp = String(req.body.otp);
@@ -194,8 +213,13 @@ exports.verifyOtpRegister = [
         return res.status(409).json({ error: 'Email already registered' });
       }
 
+      const existingUsername = await UserModel.findByUsername(username);
+      if (existingUsername) {
+        return res.status(409).json({ error: 'Username already taken' });
+      }
+
       const hashedPassword = await hashPassword(password);
-      const userId = await UserModel.create(name, email, hashedPassword, role);
+      const userId = await UserModel.create(name, email, hashedPassword, role, username);
 
       const token = generateToken(userId, role);
 
@@ -207,6 +231,7 @@ exports.verifyOtpRegister = [
           id: userId,
           name,
           email,
+          username,
           role,
         },
       });
@@ -224,6 +249,25 @@ exports.getCurrentUser = async (req, res) => {
     }
 
     res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.checkUsername = async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    if (!username || username.trim().length < 3 || !/^[a-zA-Z0-9_]+$/.test(username)) {
+      return res.status(400).json({ available: false, error: 'Username must be at least 3 characters and contain only letters, numbers, and underscores.' });
+    }
+    
+    const existing = await UserModel.findByUsername(username.trim());
+    if (existing) {
+      return res.json({ available: false });
+    }
+    
+    res.json({ available: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
