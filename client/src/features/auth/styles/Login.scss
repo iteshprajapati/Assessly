@@ -1,0 +1,120 @@
+@import '../../shared/styles/variables';
+
+.login-main {
+  flex: 1;
+  background: #fff;
+  @include flex-center;
+  min-height: calc(100vh - 64px); // Subtract header height to center properly
+}
+
+.login-container {
+  width: 100%;
+  max-width: 440px;
+  padding: 2.5rem 2rem;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.login-logo {
+  width: 100px;
+  height: auto;
+  margin: 0 auto 1.25rem;
+  display: block;
+  border-radius: 12px;
+}
+
+.login-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.2rem;
+}
+
+.login-subtitle {
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.login-form {
+  margin-top: 1.5rem;
+}
+
+.login-form-group {
+  margin-bottom: 1.1rem;
+
+  &.password-group {
+    margin-bottom: 1.5rem;
+  }
+}
+
+.login-label {
+  @include form-label-base;
+}
+
+.login-input {
+  @include form-input-base;
+}
+
+.login-input-password {
+  @include form-input-base;
+  padding: 0.65rem 2.5rem 0.65rem 1rem;
+}
+
+.login-password-wrapper {
+  position: relative;
+}
+
+.login-eye-button {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  color: #9ca3af;
+}
+
+.login-submit-btn {
+  width: 100%;
+  padding: 0.65rem;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  @include flex-center;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
+
+  &:disabled {
+    background-color: #374151 !important;
+    cursor: not-allowed;
+  }
+}
+
+.login-divider {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 1.5rem 0;
+}
+
+.login-footer-text {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.login-register-link {
+  color: #111827;
+  font-weight: 700;
+  text-decoration: none;
+}

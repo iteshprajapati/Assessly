@@ -1,8 +1,8 @@
 const { body, validationResult } = require('express-validator');
-const ResultModel = require('../models/Result');
-const QuizAttemptModel = require('../models/QuizAttempt');
-const QuestionModel = require('../models/Question');
-const AnswerModel = require('../models/Answer');
+const ResultModel = require('../db/Result');
+const QuizAttemptModel = require('../db/QuizAttempt');
+const QuestionModel = require('../db/Question');
+const AnswerModel = require('../db/Answer');
 const pool = require('../config/database');
 
 exports.submitQuiz = [
@@ -152,7 +152,7 @@ exports.getQuizResults = async (req, res) => {
     const teacherId = req.user.userId;
 
     // Verify quiz ownership
-    const QuizModel = require('../models/Quiz');
+    const QuizModel = require('../db/Quiz');
     const quiz = await QuizModel.findByIdAndTeacher(quizId, teacherId);
     if (!quiz) {
       return res.status(403).json({ error: 'Not authorized' });
@@ -188,7 +188,7 @@ exports.getQuizTopicStats = async (req, res) => {
     const { quizId } = req.params;
     const teacherId = req.user.userId;
 
-    const QuizModel = require('../models/Quiz');
+    const QuizModel = require('../db/Quiz');
     const quiz = await QuizModel.findByIdAndTeacher(quizId, teacherId);
     if (!quiz) {
       return res.status(403).json({ error: 'Not authorized' });

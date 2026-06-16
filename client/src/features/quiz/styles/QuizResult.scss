@@ -1,0 +1,152 @@
+@import '../../shared/styles/variables';
+
+.result-main {
+  flex: 1;
+}
+
+.result-wrapper {
+  padding: 2rem 0;
+}
+
+.result-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.result-summary-card-body {
+  text-align: center;
+  padding: 2rem;
+}
+
+.result-title {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.result-score-row {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.result-points-earned {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.result-points-label {
+  color: var(--text-muted);
+}
+
+.result-percentage-badge {
+  font-size: 1.5rem;
+  padding: 0.75rem 1.5rem;
+}
+
+.result-type-scores {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-body);
+}
+
+.result-timestamp {
+  margin-top: 1rem;
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+
+.result-review-title {
+  margin-bottom: 1.5rem;
+}
+
+.result-question-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.result-grading-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+
+  &.graded {
+    color: #059669;
+    background: #d1fae5;
+  }
+
+  &.pending {
+    color: #d97706;
+    background: #fef3c7;
+  }
+}
+
+.result-mcq-answer-box {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: var(--radius-sm, 6px);
+
+  &.correct {
+    background-color: #f0fdf4;
+  }
+
+  &.incorrect {
+    background-color: #fef2f2;
+  }
+}
+
+.result-descriptive-answer-box {
+  margin-top: 1rem;
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: var(--radius-sm, 6px);
+}
+
+.result-answer-header {
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.result-answer-value {
+  margin-bottom: 1rem;
+
+  &.correct {
+    color: var(--success, #10b981);
+  }
+
+  &.incorrect {
+    color: var(--danger, #ef4444);
+  }
+}
+
+.result-descriptive-text {
+  margin-bottom: 1rem;
+  white-space: pre-wrap;
+}
+
+.result-attachment-wrapper {
+  margin-bottom: 1rem;
+}
+
+.result-attachment-link {
+  font-size: 0.82rem;
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.result-feedback-box {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.result-feedback-text {
+  color: #4b5563;
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}

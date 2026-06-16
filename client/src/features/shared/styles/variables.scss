@@ -1,0 +1,71 @@
+// Sass mixins and variables for QuizPortal modular styles
+
+// Base Mixins
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin card-base {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: var(--radius, 12px);
+  box-shadow: var(--shadow-sm, 0 1px 4px rgba(0, 0, 0, 0.06));
+  overflow: hidden;
+}
+
+@mixin form-input-base {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: #f3f4f6;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #111827;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: background-color 0.15s, border-color 0.15s;
+
+  &:focus {
+    background-color: #ffffff;
+    border-color: #d1d5db;
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+    opacity: 0.6;
+    font-weight: 400;
+  }
+}
+
+@mixin form-label-base {
+  display: block;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: #111827;
+  margin-bottom: 0.4rem;
+}
+
+@mixin page-shell-base {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 3rem;
+}
+
+// Media Queries Breakpoints
+$breakpoint-md: 768px;
+$breakpoint-sm: 640px;
+
+@mixin respond-to-md {
+  @media (max-width: #{$breakpoint-md}) {
+    @content;
+  }
+}
+
+@mixin respond-to-sm {
+  @media (max-width: #{$breakpoint-sm}) {
+    @content;
+  }
+}

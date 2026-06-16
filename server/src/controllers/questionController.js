@@ -1,8 +1,8 @@
 const { body, validationResult } = require('express-validator');
-const QuestionModel = require('../models/Question');
-const QuizModel = require('../models/Quiz');
-const QuizAttemptModel = require('../models/QuizAttempt');
-const ResultModel = require('../models/Result');
+const QuestionModel = require('../db/Question');
+const QuizModel = require('../db/Quiz');
+const QuizAttemptModel = require('../db/QuizAttempt');
+const ResultModel = require('../db/Result');
 const path = require('path');
 const fs = require('fs');
 

@@ -1,7 +1,7 @@
 const { body, validationResult } = require('express-validator');
-const QuizModel = require('../models/Quiz');
-const QuizAttemptModel = require('../models/QuizAttempt');
-const AdminLogModel = require('../models/AdminLog');
+const QuizModel = require('../db/Quiz');
+const QuizAttemptModel = require('../db/QuizAttempt');
+const AdminLogModel = require('../db/AdminLog');
 
 // Create quiz
 exports.createQuiz = [
@@ -68,7 +68,7 @@ exports.getQuiz = async (req, res) => {
     }
 
     // Retrieve questions count and details
-    const QuestionModel = require('../models/Question');
+    const QuestionModel = require('../db/Question');
     const questions = await QuestionModel.getByQuiz(id);
 
     res.json({
@@ -111,7 +111,7 @@ exports.getQuizForAttempt = async (req, res) => {
       attempt = await QuizAttemptModel.findById(attemptId);
     }
 
-    const QuestionModel = require('../models/Question');
+    const QuestionModel = require('../db/Question');
     const questions = await QuestionModel.getByQuizWithoutAnswers(id);
 
     res.json({

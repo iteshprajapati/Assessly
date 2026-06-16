@@ -6,7 +6,7 @@ const {
 	verifyOtpRegister,
 	getCurrentUser,
 } = require('../controllers/authController');
-const { authenticate } = require('../middleware/auth');
+const { authenticate } = require('../middlewares/auth');
 
 const router = express.Router();
 

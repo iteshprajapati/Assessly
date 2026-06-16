@@ -1,6 +1,6 @@
 const { body, validationResult } = require('express-validator');
-const UserModel = require('../models/User');
-const OtpCodeModel = require('../models/OtpCode');
+const UserModel = require('../db/User');
+const OtpCodeModel = require('../db/OtpCode');
 const { sendOtpEmail } = require('../utils/email');
 const {
   hashPassword,

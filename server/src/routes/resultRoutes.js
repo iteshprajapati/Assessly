@@ -8,7 +8,7 @@ const {
   getQuizTopicStats,
   checkAttempted,
 } = require('../controllers/resultController');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize } = require('../middlewares/auth');
 
 const router = express.Router();
 

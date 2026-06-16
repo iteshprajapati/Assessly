@@ -1,0 +1,137 @@
+@import '../../shared/styles/variables';
+
+.home-main {
+  flex: 1;
+  background: #f0f2f5;
+}
+
+.home-hero-card {
+  background: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 4rem 3rem;
+  text-align: center;
+  marginBottom: 1.75rem;
+  position: relative;
+  overflow: hidden;
+
+  @include respond-to-md {
+    padding: 3rem 1.5rem;
+  }
+}
+
+.home-logo {
+  width: 80px;
+  height: auto;
+  margin: 0 auto 1.25rem;
+  display: block;
+  border-radius: 14px;
+}
+
+.home-title {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.03em;
+
+  @include respond-to-md {
+    font-size: 2rem;
+  }
+}
+
+.home-tagline {
+  font-size: 1rem;
+  color: #6b7280;
+  line-height: 1.7;
+  max-width: 480px;
+  margin: 0 auto 2.25rem;
+}
+
+.home-btn-group {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.home-btn-primary {
+  padding: 0.72rem 2rem;
+  background: #111827;
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #374151;
+    color: #fff;
+  }
+}
+
+.home-btn-secondary {
+  padding: 0.72rem 2rem;
+  background: #fff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+  }
+}
+
+.home-features-row {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.home-feature-card {
+  background: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: 2.25rem 1.75rem;
+  text-align: center;
+  flex: 1 1 0;
+  min-width: 220px;
+  box-shadow: var(--shadow-sm, 0 1px 4px rgba(0, 0, 0, 0.06));
+
+  @include respond-to-sm {
+    flex: 1 1 100%;
+  }
+}
+
+.home-feature-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  @include flex-center;
+  margin: 0 auto 1.25rem;
+}
+
+.home-feature-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.02em;
+}
+
+.home-feature-desc {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.65;
+}

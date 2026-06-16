@@ -1,22 +1,13 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import Navbar from './components/Navbar';
-
-import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider } from './features/auth/context/AuthContext';
+import { Navbar, ProtectedRoute } from './features/shared/components';
 
 // Pages
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import AdminDashboard from './pages/AdminDashboard';
-import TeacherDashboard from './pages/TeacherDashboard';
-import StudentDashboard from './pages/StudentDashboard';
-import CreateQuiz from './pages/CreateQuiz';
-import ManageQuestions from './pages/ManageQuestions';
-import QuizResults from './pages/QuizResults';
-import AttemptQuiz from './pages/AttemptQuiz';
-import QuizResult from './pages/QuizResult';
+import { Home } from './features/home/pages';
+import { Login, Register } from './features/auth/pages';
+import { AdminDashboard, TeacherDashboard, StudentDashboard } from './features/dashboard/pages';
+import { CreateQuiz, AttemptQuiz, QuizResult, QuizResults, ManageQuestions } from './features/quiz/pages';
 
 // Styles
 import './styles/style.css';
@@ -25,7 +16,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <div className="app-container">
           <Navbar />
           <Routes>
             {/* Public Routes */}

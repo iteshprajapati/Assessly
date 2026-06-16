@@ -6,7 +6,7 @@ const path = require('path');
 require('dotenv').config();
 
 const { runMigrations } = require('./config/migrations');
-const { errorHandler } = require('./middleware/auth');
+const { errorHandler } = require('./middlewares/auth');
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -14,7 +14,6 @@ const quizRoutes = require('./routes/quizRoutes');
 const questionRoutes = require('./routes/questionRoutes');
 const resultRoutes = require('./routes/resultRoutes');
 const descriptiveAnswerRoutes = require('./routes/descriptiveAnswerRoutes');
-const ocrRoutes = require('./routes/ocrRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -46,7 +45,6 @@ app.use('/api/quizzes', quizRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/results', resultRoutes);
 app.use('/api/answers', descriptiveAnswerRoutes);
-app.use('/api/ocr', ocrRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

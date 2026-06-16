@@ -8,7 +8,7 @@ const {
   updateQuiz,
   deleteQuiz,
 } = require('../controllers/quizController');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize } = require('../middlewares/auth');
 
 const router = express.Router();
 

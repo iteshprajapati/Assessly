@@ -1,0 +1,46 @@
+@import '../../shared/styles/variables';
+
+.create-quiz-main {
+  flex: 1;
+  background-color: #ffffff;
+}
+
+.create-quiz-wrapper {
+  padding: 2rem 0;
+}
+
+.create-quiz-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.create-quiz-header {
+  margin-bottom: 2rem;
+
+  h1 {
+    margin-bottom: 0.25rem;
+  }
+
+  p {
+    color: var(--text-muted);
+    margin: 0;
+  }
+}
+
+.create-quiz-input {
+  @include form-input-base;
+  
+  &.time-limit-input {
+    width: auto;
+  }
+}
+
+.create-quiz-textarea {
+  @include form-input-base;
+  resize: vertical;
+}
+
+.create-quiz-buttons-row {
+  display: flex;
+  gap: 1rem;
+}

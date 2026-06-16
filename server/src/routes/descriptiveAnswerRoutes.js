@@ -10,8 +10,8 @@ const {
   updatePresetAnswer,
   deletePresetAnswer,
 } = require('../controllers/descriptiveAnswerController');
-const { authenticate, authorize } = require('../middleware/auth');
-const upload = require('../middleware/upload');
+const { authenticate, authorize } = require('../middlewares/auth');
+const upload = require('../middlewares/upload');
 
 const router = express.Router();
 

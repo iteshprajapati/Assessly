@@ -31,12 +31,8 @@ graph TD
     end
 
     subgraph Business Logic & Utilities
-        OCR[Tesseract.js OCR Engine]
-        Sharp[Sharp Image Processor]
         Helpers[JWT & Bcrypt Utils]
         
-        Controllers --> OCR
-        Controllers --> Sharp
         Controllers --> Helpers
     end
 
@@ -53,7 +49,6 @@ graph TD
 - **Decoupled Client-Server**: Communication is strictly API-driven via JSON.
 - **Controller-Model Separation**: Controllers coordinate requests, validation, and responses. Models encapsulate database queries and schema abstractions.
 - **Relational Integrity**: Uses MySQL's InnoDB storage engine to guarantee ACID transactions and physical constraints (Foreign Keys with cascade deletes).
-- **OCR Processing Pipeline**: An advanced server-side image manipulation and text recognition pipeline using Sharp and Tesseract.js.
 
 ---
 
@@ -75,7 +70,6 @@ Quiz-System-MERN/
 │   │   │   ├── questionController.js# MCQ, True/False & Descriptive Questions
 │   │   │   ├── resultController.js  # Result Submission & Stats
 │   │   │   ├── descriptiveAnswerController.js # Descriptive Grading & Preset Criteria (Answer Keys)
-│   │   │   └── ocrController.js     # Image Upload & OCR Processing
 │   │   ├── middleware/
 │   │   │   ├── auth.js              # Token Verification & Role Auth
 │   │   │   └── upload.js            # Multer Multipart File Uploads
@@ -92,7 +86,6 @@ Quiz-System-MERN/
 │   │   ├── routes/                  # Express Express API Routers
 │   │   ├── utils/
 │   │   │   ├── helpers.js           # Password hash & Token utilities
-│   │   │   └── ocrParser.js         # Parsing Questions & Options from Raw OCR Text
 │   │   └── index.js                 # Express Application Bootstrapper
 │   └── package.json
 │
@@ -103,8 +96,7 @@ Quiz-System-MERN/
     │   │   ├── Footer.jsx
     │   │   ├── ProtectedRoute.jsx
     │   │   ├── Alert.jsx
-    │   │   ├── QuizTimer.jsx
-    │   │   └── ExtractQuestionsFromImage.jsx # OCR Upload Dialog
+    │   │   └── QuizTimer.jsx
     │   ├── context/
     │   │   └── AuthContext.jsx      # Global Authentication Store
     │   ├── hooks/                   # Custom Utility React Hooks
@@ -116,7 +108,7 @@ Quiz-System-MERN/
     │   │   ├── TeacherDashboard.jsx
     │   │   ├── StudentDashboard.jsx
     │   │   ├── CreateQuiz.jsx
-    │   │   ├── ManageQuestions.jsx  # Question CRUD & OCR Trigger
+    │   │   ├── ManageQuestions.jsx  # Question CRUD
     │   │   ├── AttemptQuiz.jsx      # Real-time Quiz Interface
     │   │   ├── QuizResult.jsx       # Student Result Visualizer
     │   │   ├── QuizResults.jsx      # Teacher Results Overview
@@ -440,39 +432,7 @@ Tracks admin/teacher operations.
 4. **Descriptive Answer Storage**: If a quiz contains descriptive questions, students submit their answers (and optional supporting images) using the `answerAPI.submitAnswer` wrapper. Submissions go to `answers` where they remain as `is_correct IS NULL`.
 5. **Teacher Evaluation**: Teachers load ungraded answers, comparing student responses against criteria defined in `answer_keys`. Submitting grades updates `answers` with `marks_obtained`, feedback details, and flags `is_correct`. It then aggregates and updates `results` with descriptive scores.
 
-### 4.3. OCR Question Extraction Pipeline
-A key tool for teachers to import questions in bulk from images of exam papers.
 
-```
-+------------------+     Multipart Upload     +----------------------+
-| Upload interface | -----------------------> | sharp preprocessing  |
-| (Component:      |                          | (convert grayscale,  |
-| ExtractQuestions) |                          | contrast, normalise) |
-+------------------+                          +----------------------+
-                                                         |
-                                                         v
-+------------------+     Regex Match Parse    +----------------------+
-| JSON questions   | <----------------------- | Tesseract OCR        |
-| preview/editor   |                          | (Eng text extraction)|
-+------------------+                          +----------------------+
-         |
-         | Save Questions
-         v
-+------------------+
-| API bulk insert  |
-| to DB            |
-+------------------+
-```
-
-1. **Upload & Preprocessing**: Images are uploaded to `POST /api/ocr/extract-questions`. The backend routes the file through `sharp` (converts to grayscale, normalizes histogram, enhances contrast) to produce an optimized PNG file for extraction.
-2. **Text Extraction**: Tesseract OCR runs on the processed image, generating a raw text block. The raw image is deleted from filesystem once extraction is complete.
-3. **Structured Parser**: The `ocrParser.js` parses the text block line by line:
-   - **Questions**: Detects regex prefix `Q[0-9].`, `Q.[0-9]`, or `[0-9].`.
-   - **Options**: Identifies options using matching patterns: `(A)`, `a)`, `1)`, etc.
-   - **Marks**: Detects values matching `(\d+)\s*(marks|points|pts)`.
-4. **Interactive Editor**: The structured JSON payload is returned to the teacher in a modal editor where they can refine texts, adjust option configurations, assign correct answer markers, and execute bulk inserts.
-
----
 
 ## 5. API Reference Summary
 
@@ -500,5 +460,3 @@ A key tool for teachers to import questions in bulk from images of exam papers.
 | **POST** | `/api/answers/preset` | Teacher Only | Setup grading criteria key |
 | **POST** | `/api/results/submit` | Student Only | Process MCQ/True-False responses & issue results |
 | **GET** | `/api/results/:id` | Authenticated | Fetch result attempt breakdown & stats |
-| **POST** | `/api/ocr/extract-questions` | Teacher Only | Upload question paper & run OCR |
-| **POST** | `/api/ocr/validate-questions` | Teacher Only | Validation checks on extracted questions |
