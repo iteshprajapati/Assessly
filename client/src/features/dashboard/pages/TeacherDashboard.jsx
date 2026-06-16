@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { quizAPI } from '../../shared/services/api';
 import { useAuth } from '../../auth/context/AuthContext';
 import { LayoutDashboard, BookOpen, HelpCircle, Users, Plus, Edit2, BarChart3, Trash2 } from 'lucide-react';
@@ -7,6 +7,8 @@ import '../styles/TeacherDashboard.scss';
 
 export default function TeacherDashboard() {
   const { user } = useAuth();
+  const { username } = useParams();
+  const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -14,6 +16,14 @@ export default function TeacherDashboard() {
     totalQuestions: 0,
     totalAttempts: 0,
   });
+
+  useEffect(() => {
+    if (user && user.role === 'teacher') {
+      if (!username || username !== user.username) {
+        navigate(`/teacher/${user.username}`, { replace: true });
+      }
+    }
+  }, [username, user, navigate]);
 
   useEffect(() => {
     loadQuizzes();

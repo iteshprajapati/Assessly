@@ -93,7 +93,7 @@ export default function Register() {
         });
         const { token, user } = response.data;
         login(token, user);
-        navigate(user.role === 'teacher' ? '/teacher' : '/student');
+        navigate(user.role === 'teacher' ? `/teacher/${user.username}` : '/student');
       }
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.response?.data?.errors?.[0]?.msg || 'Registration failed';

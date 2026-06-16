@@ -40,7 +40,7 @@ export default function Login() {
       const response = await authAPI.login(formData);
       const { token, user } = response.data;
       login(token, user);
-      navigate(user.role === 'admin' ? '/admin' : user.role === 'teacher' ? '/teacher' : '/student');
+      navigate(user.role === 'admin' ? '/admin' : user.role === 'teacher' ? `/teacher/${user.username}` : '/student');
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');
     } finally {

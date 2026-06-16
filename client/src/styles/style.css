@@ -251,6 +251,123 @@ a:hover {
   border: 1px solid #e5e7eb;
 }
 
+/* ---------- Profile Dropdown ---------- */
+.profile-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-icon-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+.profile-icon-btn:hover {
+  background-color: var(--primary-light);
+}
+
+.profile-avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #111827 0%, #374151 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profile-dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 240px;
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  animation: dropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-menu-header {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.75rem 0.75rem 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.profile-menu-name {
+  font-weight: 700;
+  color: var(--text-dark);
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.profile-menu-username {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 0.15rem;
+}
+
+.profile-dropdown-menu .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.75rem;
+  color: var(--text-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background-color 0.15s, color 0.15s;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.profile-dropdown-menu .dropdown-item:hover {
+  background-color: var(--primary-light);
+  color: var(--text-dark) !important;
+}
+
+.profile-dropdown-menu .dropdown-item-danger {
+  color: var(--danger);
+}
+
+.profile-dropdown-menu .dropdown-item-danger:hover {
+  background-color: #fee2e2;
+  color: #991b1b !important;
+}
+
 /* ---------- Cards ---------- */
 .card {
   border: 1px solid var(--border);
@@ -544,6 +661,17 @@ a:hover {
 
 .btn-primary:hover:not(:disabled) {
   background: #374151;
+  color: #fff !important;
+}
+
+.btn-black {
+  background: #000000;
+  color: #ffffff;
+}
+
+.btn-black:hover:not(:disabled) {
+  background: #27272a;
+  color: #ffffff !important;
 }
 
 .btn-secondary {
@@ -554,6 +682,7 @@ a:hover {
 
 .btn-secondary:hover:not(:disabled) {
   background: var(--border);
+  color: var(--text-dark) !important;
 }
 
 .btn-danger {
@@ -563,6 +692,7 @@ a:hover {
 
 .btn-danger:hover:not(:disabled) {
   background: #b91c1c;
+  color: #fff !important;
 }
 
 .btn-success {
@@ -572,6 +702,7 @@ a:hover {
 
 .btn-success:hover:not(:disabled) {
   background: #15803d;
+  color: #fff !important;
 }
 
 .btn-warning {
@@ -581,6 +712,7 @@ a:hover {
 
 .btn-warning:hover:not(:disabled) {
   background: #b45309;
+  color: #fff !important;
 }
 
 .btn-outline-primary {
@@ -591,6 +723,7 @@ a:hover {
 
 .btn-outline-primary:hover:not(:disabled) {
   background: var(--primary-light);
+  color: var(--primary) !important;
 }
 
 .btn-outline-secondary {
@@ -601,6 +734,7 @@ a:hover {
 
 .btn-outline-secondary:hover:not(:disabled) {
   background: var(--primary-light);
+  color: var(--text-body) !important;
 }
 
 .btn-sm {

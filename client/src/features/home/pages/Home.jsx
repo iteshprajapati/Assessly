@@ -60,7 +60,7 @@ export default function Home() {
 
   const dashboardPath =
     user?.role === 'admin' ? '/admin' :
-    user?.role === 'teacher' ? '/teacher' : '/student';
+    user?.role === 'teacher' ? `/teacher/${user?.username}` : '/student';
 
   return (
     <main className="home-main">

@@ -44,6 +44,14 @@ function App() {
               }
             />
             <Route
+              path="/teacher/:username"
+              element={
+                <ProtectedRoute requiredRole="teacher">
+                  <TeacherDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/teacher/create-quiz"
               element={
                 <ProtectedRoute requiredRole="teacher">

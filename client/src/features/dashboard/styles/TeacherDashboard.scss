@@ -138,6 +138,12 @@
     border: none;
     border-radius: 8px;
     padding: 0.4rem 0.8rem;
+    transition: background-color 0.18s ease;
+
+    &:hover:not(:disabled) {
+      background-color: #27272a;
+      color: white !important;
+    }
   }
 
   .btn-gray-toggle {
@@ -151,6 +157,7 @@
 
     &:hover {
       background-color: #e5e7eb;
+      color: #111827 !important;
     }
   }
 
