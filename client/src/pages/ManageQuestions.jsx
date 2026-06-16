@@ -271,7 +271,7 @@ export default function ManageQuestions() {
     );
   }
 
-  const mcqCount = questions.filter(q => q.type === 'MCQ').length;
+  const mcqCount = questions.filter(q => q.type === 'MCQ' || q.type === 'TRUE_FALSE').length;
   const descriptiveCount = questions.filter(q => q.type === 'DESCRIPTIVE').length;
 
   return (
@@ -397,20 +397,24 @@ export default function ManageQuestions() {
               <div className="mb-3" style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label">Question Type *</label>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                  {['MCQ', 'DESCRIPTIVE'].map((type) => (
-                    <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  {[
+                    { val: 'MCQ', label: 'Multiple Choice' },
+                    { val: 'TRUE_FALSE', label: 'True / False' },
+                    { val: 'DESCRIPTIVE', label: 'Descriptive' }
+                  ].map((t) => (
+                    <label key={t.val} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                       <input
                         type="radio"
                         name="questionType"
-                        value={type}
-                        checked={questionType === type}
+                        value={t.val}
+                        checked={questionType === t.val}
                         onChange={(e) => {
                           if (!editingId) setQuestionType(e.target.value);
                         }}
                         disabled={!!editingId}
                         style={{ cursor: editingId ? 'not-allowed' : 'pointer' }}
                       />
-                      <span>{type === 'MCQ' ? 'Multiple Choice' : 'Descriptive'}</span>
+                      <span>{t.label}</span>
                     </label>
                   ))}
                 </div>
@@ -442,28 +446,56 @@ export default function ManageQuestions() {
                   <div className="form-text">Optional, used for analytics.</div>
                 </div>
 
-                {/* Points */}
-                <div className="mb-3">
-                  <label className="form-label">Points</label>
-                  <input
-                    type="number"
-                    name="points"
-                    className="auth-input"
-                    min="1"
-                    value={formData.points}
-                    onChange={handleChange}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 1rem',
-                      background: '#f3f4f6',
-                      border: '1px solid transparent',
-                      borderRadius: '8px',
-                      fontSize: '0.85rem',
-                      color: '#111827',
-                      outline: 'none',
-                      boxSizing: 'border-box'
-                    }}
-                  />
+                {/* Difficulty & Points row */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                  <div>
+                    <label className="form-label">Difficulty *</label>
+                    <select
+                      name="difficulty"
+                      className="auth-input"
+                      value={formData.difficulty || 'medium'}
+                      onChange={handleChange}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 1rem',
+                        background: '#f3f4f6',
+                        border: '1px solid transparent',
+                        borderRadius: '8px',
+                        fontSize: '0.85rem',
+                        color: '#111827',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="easy">Easy</option>
+                      <option value="medium">Medium</option>
+                      <option value="hard">Hard</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">Points</label>
+                    <input
+                      type="number"
+                      name="points"
+                      className="auth-input"
+                      min="1"
+                      value={formData.points}
+                      onChange={handleChange}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 1rem',
+                        background: '#f3f4f6',
+                        border: '1px solid transparent',
+                        borderRadius: '8px',
+                        fontSize: '0.85rem',
+                        color: '#111827',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* Image Upload */}
@@ -579,34 +611,40 @@ export default function ManageQuestions() {
                   />
                 </div>
 
-                {/* MCQ Options (only show for MCQ) */}
-                {questionType === 'MCQ' && (
+                {/* MCQ or TRUE_FALSE Options */}
+                {(questionType === 'MCQ' || questionType === 'TRUE_FALSE') && (
                   <>
-                    {[1, 2, 3, 4].map((num) => (
-                      <div key={num} className="mb-3">
-                        <label className="form-label">Option {num} *</label>
-                        <input
-                          type="text"
-                          name={`option${num}`}
-                          className="auth-input"
-                          placeholder={`Enter option ${num}...`}
-                          value={formData[`option${num}`]}
-                          onChange={handleChange}
-                          required={questionType === 'MCQ'}
-                          style={{
-                            width: '100%',
-                            padding: '0.65rem 1rem',
-                            background: '#f3f4f6',
-                            border: '1px solid transparent',
-                            borderRadius: '8px',
-                            fontSize: '0.85rem',
-                            color: '#111827',
-                            outline: 'none',
-                            boxSizing: 'border-box'
-                          }}
-                        />
+                    {questionType === 'MCQ' ? (
+                      [1, 2, 3, 4].map((num) => (
+                        <div key={num} className="mb-3">
+                          <label className="form-label">Option {num} *</label>
+                          <input
+                            type="text"
+                            name={`option${num}`}
+                            className="auth-input"
+                            placeholder={`Enter option {num}...`}
+                            value={formData[`option${num}`]}
+                            onChange={handleChange}
+                            required={questionType === 'MCQ'}
+                            style={{
+                              width: '100%',
+                              padding: '0.65rem 1rem',
+                              background: '#f3f4f6',
+                              border: '1px solid transparent',
+                              borderRadius: '8px',
+                              fontSize: '0.85rem',
+                              color: '#111827',
+                              outline: 'none',
+                              boxSizing: 'border-box'
+                            }}
+                          />
+                        </div>
+                      ))
+                    ) : (
+                      <div className="mb-3" style={{ padding: '0.5rem 0.75rem', background: '#f3f4f6', borderRadius: '8px', color: '#4b5563', fontSize: '0.82rem' }}>
+                        Options auto-configured: <strong>Option 1 = True</strong>, <strong>Option 2 = False</strong>.
                       </div>
-                    ))}
+                    )}
 
                     {/* Correct Option */}
                     <div className="mb-4">
@@ -630,9 +668,14 @@ export default function ManageQuestions() {
                           cursor: 'pointer'
                         }}
                       >
-                        {[1, 2, 3, 4].map((n) => (
-                          <option key={n} value={n}>Option {n}</option>
-                        ))}
+                        <option value="1">{questionType === 'MCQ' ? 'Option 1' : 'True'}</option>
+                        <option value="2">{questionType === 'MCQ' ? 'Option 2' : 'False'}</option>
+                        {questionType === 'MCQ' && (
+                          <>
+                            <option value="3">Option 3</option>
+                            <option value="4">Option 4</option>
+                          </>
+                        )}
                       </select>
                     </div>
                   </>
@@ -710,12 +753,22 @@ export default function ManageQuestions() {
                           <span style={{
                             fontWeight: '600',
                             fontSize: '0.75rem',
-                            color: q.type === 'MCQ' ? '#1f2937' : '#059669',
-                            background: q.type === 'MCQ' ? '#f0f0f0' : '#d1fae5',
+                            color: q.type === 'MCQ' ? '#1f2937' : q.type === 'TRUE_FALSE' ? '#2563eb' : '#059669',
+                            background: q.type === 'MCQ' ? '#f0f0f0' : q.type === 'TRUE_FALSE' ? '#dbeafe' : '#d1fae5',
                             padding: '0.2rem 0.6rem',
                             borderRadius: '999px',
                           }}>
                             {q.type}
+                          </span>
+                          <span style={{
+                            fontWeight: '600',
+                            fontSize: '0.75rem',
+                            color: q.difficulty === 'easy' ? '#059669' : q.difficulty === 'hard' ? '#dc2626' : '#d97706',
+                            background: q.difficulty === 'easy' ? '#d1fae5' : q.difficulty === 'hard' ? '#fee2e2' : '#fef3c7',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '999px',
+                          }}>
+                            {q.difficulty?.toUpperCase()}
                           </span>
                           <span style={{
                             fontWeight: '500',
@@ -725,7 +778,7 @@ export default function ManageQuestions() {
                             padding: '0.2rem 0.6rem',
                             borderRadius: '999px',
                           }}>
-                            {q.points} pts
+                            {q.points || 1} pts
                           </span>
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
@@ -825,10 +878,10 @@ export default function ManageQuestions() {
                         Topic: <strong>{q.topic || 'General'}</strong>
                       </div>
 
-                      {/* Options (MCQ only) */}
-                      {q.type === 'MCQ' && (
+                      {/* Options (MCQ / TRUE_FALSE) */}
+                      {(q.type === 'MCQ' || q.type === 'TRUE_FALSE') && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                          {[1, 2, 3, 4].map((num) => {
+                          {(q.type === 'MCQ' ? [1, 2, 3, 4] : [1, 2]).map((num) => {
                             const isCorrect = q.correct_option === num;
                             return (
                               <div
@@ -861,7 +914,7 @@ export default function ManageQuestions() {
                                 }}>
                                   {isCorrect ? '✓' : num}
                                 </span>
-                                {q[`option${num}`]}
+                                {num === 1 ? (q.option1 || 'True') : num === 2 ? (q.option2 || 'False') : num === 3 ? q.option3 : q.option4}
                               </div>
                             );
                           })}

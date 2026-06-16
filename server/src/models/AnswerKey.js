@@ -1,9 +1,9 @@
 const pool = require('../config/database');
 
-class PresetAnswerModel {
+class AnswerKeyModel {
   static async create(questionId, answerText, marks) {
     const [result] = await pool.query(
-      `INSERT INTO preset_answers (question_id, answer_text, marks)
+      `INSERT INTO answer_keys (question_id, answer_text, marks)
        VALUES (?, ?, ?)`,
       [questionId, answerText, marks]
     );
@@ -12,7 +12,7 @@ class PresetAnswerModel {
 
   static async findById(id) {
     const [rows] = await pool.query(
-      'SELECT * FROM preset_answers WHERE id = ? LIMIT 1',
+      'SELECT * FROM answer_keys WHERE id = ? LIMIT 1',
       [id]
     );
     return rows[0] || null;
@@ -20,7 +20,7 @@ class PresetAnswerModel {
 
   static async getByQuestion(questionId) {
     const [rows] = await pool.query(
-      'SELECT * FROM preset_answers WHERE question_id = ? ORDER BY id ASC',
+      'SELECT * FROM answer_keys WHERE question_id = ? ORDER BY id ASC',
       [questionId]
     );
     return rows;
@@ -28,18 +28,18 @@ class PresetAnswerModel {
 
   static async update(id, answerText, marks) {
     await pool.query(
-      `UPDATE preset_answers SET answer_text = ?, marks = ? WHERE id = ?`,
+      `UPDATE answer_keys SET answer_text = ?, marks = ? WHERE id = ?`,
       [answerText, marks, id]
     );
   }
 
   static async delete(id) {
-    await pool.query('DELETE FROM preset_answers WHERE id = ?', [id]);
+    await pool.query('DELETE FROM answer_keys WHERE id = ?', [id]);
   }
 
   static async deleteByQuestion(questionId) {
-    await pool.query('DELETE FROM preset_answers WHERE question_id = ?', [questionId]);
+    await pool.query('DELETE FROM answer_keys WHERE question_id = ?', [questionId]);
   }
 }
 
-module.exports = PresetAnswerModel;
+module.exports = AnswerKeyModel;

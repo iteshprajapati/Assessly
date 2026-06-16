@@ -67,7 +67,7 @@ export default function GradeDescriptiveAnswers() {
   };
 
   const currentAnswer = answers[currentIndex];
-  const maxMarks = currentAnswer?.points || 0;
+  const maxMarks = presetAnswers.length > 0 ? Math.max(...presetAnswers.map(p => p.marks)) : 10;
 
   const handleGrade = async () => {
     setError('');

@@ -1,7 +1,8 @@
 const { body, validationResult } = require('express-validator');
 const ResultModel = require('../models/Result');
+const QuizAttemptModel = require('../models/QuizAttempt');
 const QuestionModel = require('../models/Question');
-const StudentAnswerModel = require('../models/StudentAnswer');
+const AnswerModel = require('../models/Answer');
 const pool = require('../config/database');
 
 exports.submitQuiz = [
@@ -21,33 +22,71 @@ exports.submitQuiz = [
       const { quizId, answers } = req.body;
       const studentId = req.user.userId;
 
-      const hasAttempted = await ResultModel.hasAttempted(studentId, quizId);
+      // Check if student has already submitted this quiz
+      const hasAttempted = await QuizAttemptModel.hasAttempted(studentId, quizId);
       if (hasAttempted) {
         await connection.rollback();
         return res.status(409).json({ error: 'Quiz already submitted' });
       }
 
-      // Get questions
+      // Get or start active attempt
+      let attempt = await QuizAttemptModel.findActiveAttempt(studentId, quizId);
+      if (!attempt) {
+        const attemptId = await QuizAttemptModel.startAttempt(quizId, studentId);
+        attempt = await QuizAttemptModel.findById(attemptId);
+      }
+
       const questions = await QuestionModel.getByQuiz(quizId);
       if (!questions.length) {
         await connection.rollback();
         return res.status(400).json({ error: 'Quiz has no questions' });
       }
 
-      // Calculate score
-      let score = 0;
-      for (const q of questions) {
-        const selectedOption = answers[q.id];
-        if (selectedOption === q.correct_option) {
-          score++;
-        }
+      let mcqScore = 0;
+      let mcqCount = 0;
 
-        // Store answer
-        await StudentAnswerModel.create(studentId, quizId, q.id, selectedOption || null);
+      for (const q of questions) {
+        if (q.type === 'MCQ' || q.type === 'TRUE_FALSE') {
+          mcqCount++;
+          const selectedOptionId = answers[q.id] ? parseInt(answers[q.id]) : null;
+          
+          let isCorrect = false;
+          if (selectedOptionId) {
+            // Find option and check correctness
+            const option = q.options.find(o => o.id === selectedOptionId);
+            if (option && option.is_correct) {
+              isCorrect = true;
+              mcqScore++;
+            }
+          }
+
+          // Save answer in answers table
+          const existingAnswer = await AnswerModel.findByAttemptAndQuestion(attempt.id, q.id);
+          if (existingAnswer) {
+            await AnswerModel.update(existingAnswer.id, selectedOptionId, null, null, isCorrect, isCorrect ? 1 : 0);
+          } else {
+            await AnswerModel.create(attempt.id, q.id, selectedOptionId, null, null, isCorrect, isCorrect ? 1 : 0);
+          }
+        }
       }
 
+      // Calculate scores
+      const totalScore = mcqScore; // initially only MCQ score is graded
+      const maxScore = questions.length; // 1 mark per question
+      const percentage = maxScore > 0 ? ((totalScore / maxScore) * 100).toFixed(2) : 0;
+
       // Create result
-      const resultId = await ResultModel.create(studentId, quizId, score, questions.length);
+      const resultId = await ResultModel.create(
+        attempt.id,
+        totalScore,
+        maxScore,
+        mcqScore,
+        0, // descriptive score initially 0
+        percentage
+      );
+
+      // Submit attempt
+      await QuizAttemptModel.submitAttempt(attempt.id);
 
       await connection.commit();
 
@@ -55,9 +94,9 @@ exports.submitQuiz = [
         success: true,
         message: 'Quiz submitted successfully',
         resultId,
-        score,
+        score: totalScore,
         totalQuestions: questions.length,
-        percentage: Math.round((score / questions.length) * 100),
+        percentage: Math.round(percentage),
       });
     } catch (error) {
       await connection.rollback();
@@ -77,15 +116,15 @@ exports.getResult = async (req, res) => {
       return res.status(404).json({ error: 'Result not found' });
     }
 
-    // Get student answers
-    const answers = await StudentAnswerModel.getByQuizAndStudent(result.quiz_id, result.student_id);
+    // Get student answers for this attempt
+    const answers = await AnswerModel.getByAttempt(result.attempt_id);
 
     res.json({
       success: true,
       data: {
         ...result,
         answers,
-        percentage: Math.round((result.score / result.total_questions) * 100),
+        percentage: Math.round(result.percentage),
       },
     });
   } catch (error) {
@@ -155,13 +194,13 @@ exports.getQuizTopicStats = async (req, res) => {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
-    const rows = await ResultModel.getTopicStats(quizId);
+    const rows = await ResultModel.getDifficultyStats(quizId);
     const data = rows.map((row) => {
       const totalAnswers = row.total_answers || 0;
       const correctAnswers = row.correct_answers || 0;
       const accuracy = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
       return {
-        topic: row.topic,
+        topic: row.difficulty.toUpperCase(), // Map difficulty to topic field for frontend compatibility
         questionCount: row.question_count,
         totalAnswers,
         correctAnswers,
@@ -183,7 +222,7 @@ exports.checkAttempted = async (req, res) => {
     const { quizId } = req.params;
     const studentId = req.user.userId;
 
-    const hasAttempted = await ResultModel.hasAttempted(studentId, quizId);
+    const hasAttempted = await QuizAttemptModel.hasAttempted(studentId, quizId);
 
     res.json({
       success: true,

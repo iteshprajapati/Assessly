@@ -1,9 +1,11 @@
 const { body, validationResult } = require('express-validator');
-const DescriptiveAnswerModel = require('../models/DescriptiveAnswer');
-const PresetAnswerModel = require('../models/PresetAnswer');
+const AnswerModel = require('../models/Answer');
+const AnswerKeyModel = require('../models/AnswerKey');
 const QuestionModel = require('../models/Question');
 const QuizModel = require('../models/Quiz');
 const ResultModel = require('../models/Result');
+const QuizAttemptModel = require('../models/QuizAttempt');
+const AdminLogModel = require('../models/AdminLog');
 const path = require('path');
 const fs = require('fs');
 
@@ -24,33 +26,29 @@ exports.submitDescriptiveAnswer = [
       const studentId = req.user.userId;
       const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
 
-      // Verify question belongs to quiz
+      // Verify question type
       const question = await QuestionModel.findById(questionId);
-      if (!question || question.quiz_id !== parseInt(quizId) || question.type !== 'DESCRIPTIVE') {
-        return res.status(400).json({ error: 'Invalid question' });
+      if (!question || question.type !== 'DESCRIPTIVE') {
+        return res.status(400).json({ error: 'Invalid descriptive question' });
       }
 
-      // Check if student has already submitted answer for this question
-      const existingAnswer = await DescriptiveAnswerModel.findByStudentAndQuestion(studentId, questionId);
-      
+      // Fetch student's latest attempt for this quiz
+      const attempts = await QuizAttemptModel.getByQuizAndStudent(quizId, studentId);
+      const attempt = attempts[0];
+      if (!attempt) {
+        return res.status(400).json({ error: 'No active attempt found' });
+      }
+
+      const existingAnswer = await AnswerModel.findByAttemptAndQuestion(attempt.id, questionId);
+      let answerId;
       if (existingAnswer) {
-        // Update existing answer
-        await DescriptiveAnswerModel.update(existingAnswer.id, answerText, imagePath);
-        return res.json({
-          success: true,
-          message: 'Answer updated successfully',
-          answerId: existingAnswer.id
-        });
+        // Update
+        await AnswerModel.update(existingAnswer.id, null, answerText, imagePath, null, 0);
+        answerId = existingAnswer.id;
+      } else {
+        // Create
+        answerId = await AnswerModel.create(attempt.id, questionId, null, answerText, imagePath, null, 0);
       }
-
-      // Create new answer
-      const answerId = await DescriptiveAnswerModel.create(
-        studentId,
-        quizId,
-        questionId,
-        answerText,
-        imagePath
-      );
 
       res.status(201).json({
         success: true,
@@ -58,7 +56,6 @@ exports.submitDescriptiveAnswer = [
         answerId,
       });
     } catch (error) {
-      // Delete uploaded file if error occurs
       if (req.file) {
         fs.unlinkSync(req.file.path);
       }
@@ -67,23 +64,26 @@ exports.submitDescriptiveAnswer = [
   },
 ];
 
-// Get descriptive answers for student (only graded ones)
+// Get descriptive answers for student (graded)
 exports.getStudentAnswers = async (req, res) => {
   try {
     const { quizId } = req.params;
     const studentId = req.user.userId;
 
-    // Verify student has attempted quiz
-    const hasAttempted = await ResultModel.hasAttempted(studentId, quizId);
-    if (!hasAttempted) {
+    const attempts = await QuizAttemptModel.getByQuizAndStudent(quizId, studentId);
+    const attempt = attempts[0];
+    if (!attempt) {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
-    const answers = await DescriptiveAnswerModel.getGradedByStudent(studentId, quizId);
+    const allAnswers = await AnswerModel.getByAttempt(attempt.id);
+    const descriptiveAnswers = allAnswers.filter(
+      (a) => a.question_type === 'DESCRIPTIVE' && a.is_correct !== null
+    );
 
     res.json({
       success: true,
-      data: answers,
+      data: descriptiveAnswers,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -96,13 +96,12 @@ exports.getUngradedAnswers = async (req, res) => {
     const { quizId } = req.params;
     const teacherId = req.user.userId;
 
-    // Verify quiz ownership
     const quiz = await QuizModel.findByIdAndTeacher(quizId, teacherId);
     if (!quiz) {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
-    const answers = await DescriptiveAnswerModel.getUngradedByQuiz(quizId);
+    const answers = await AnswerModel.getUngradedByQuiz(quizId);
 
     res.json({
       success: true,
@@ -129,8 +128,8 @@ exports.gradeAnswer = [
       const { marksObtained, teacherFeedback } = req.body;
       const teacherId = req.user.userId;
 
-      // Get answer with quiz and question details
-      const answer = await DescriptiveAnswerModel.findById(answerId);
+      // Get answer details
+      const answer = await AnswerModel.findById(answerId);
       if (!answer) {
         return res.status(404).json({ error: 'Answer not found' });
       }
@@ -141,13 +140,43 @@ exports.gradeAnswer = [
         return res.status(403).json({ error: 'Not authorized' });
       }
 
-      // Verify marks don't exceed question points
-      const question = await QuestionModel.findById(answer.question_id);
-      if (marksObtained > question.points) {
-        return res.status(400).json({ error: `Marks cannot exceed ${question.points} points` });
+      // Retrieve question criteria from answer keys (to verify max marks or set marks limits)
+      const answerKeys = await AnswerKeyModel.getByQuestion(answer.question_id);
+      const maxMarks = answerKeys.reduce((max, key) => Math.max(max, key.marks), 0) || 10; // Default limit 10 if no preset criteria
+
+      if (marksObtained > maxMarks) {
+        return res.status(400).json({ error: `Marks cannot exceed preset maximum of ${maxMarks} points` });
       }
 
-      await DescriptiveAnswerModel.grade(answerId, marksObtained, teacherFeedback || '', teacherId);
+      const isCorrect = marksObtained > 0;
+
+      // Update descriptive answer evaluation
+      await AnswerModel.grade(answerId, marksObtained, isCorrect);
+
+      // Re-calculate the student's result scores
+      const result = await ResultModel.findByAttempt(answer.attempt_id);
+      if (result) {
+        const attemptAnswers = await AnswerModel.getByAttempt(answer.attempt_id);
+        const descriptiveScore = attemptAnswers
+          .filter((a) => a.question_type === 'DESCRIPTIVE')
+          .reduce((sum, a) => sum + (a.marks_obtained || 0), 0);
+
+        const totalScore = result.mcq_score + descriptiveScore;
+        const percentage = result.max_score > 0 ? ((totalScore / result.max_score) * 100).toFixed(2) : 0;
+
+        await ResultModel.update(result.id, totalScore, descriptiveScore, percentage);
+      }
+
+      // Log grading action
+      await AdminLogModel.create(
+        teacherId,
+        'GRADE_ANSWER',
+        'answers',
+        answerId,
+        `Graded descriptive answer ID ${answerId} with ${marksObtained} marks`,
+        req.ip,
+        req.headers['user-agent']
+      );
 
       res.json({
         success: true,
@@ -165,36 +194,34 @@ exports.getAnswerForGrading = async (req, res) => {
     const { answerId } = req.params;
     const teacherId = req.user.userId;
 
-    const answer = await DescriptiveAnswerModel.findById(answerId);
+    const answer = await AnswerModel.findById(answerId);
     if (!answer) {
       return res.status(404).json({ error: 'Answer not found' });
     }
 
-    // Verify quiz ownership
     const quiz = await QuizModel.findByIdAndTeacher(answer.quiz_id, teacherId);
     if (!quiz) {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
-    // Get preset answers for this question
-    const presetAnswers = await PresetAnswerModel.getByQuestion(answer.question_id);
+    const presetAnswers = await AnswerKeyModel.getByQuestion(answer.question_id);
 
     res.json({
       success: true,
       data: {
         answer,
-        presetAnswers
-      }
+        presetAnswers,
+      },
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Add preset answer option for grading
+// Add preset answer key for grading criteria
 exports.addPresetAnswer = [
   body('questionId').isInt().withMessage('Question ID is required'),
-  body('answerText').trim().notEmpty().withMessage('Answer text is required'),
+  body('answerText').trim().notEmpty().withMessage('Criteria text is required'),
   body('marks').isInt({ min: 0 }).withMessage('Marks must be a non-negative integer'),
 
   async (req, res) => {
@@ -207,28 +234,21 @@ exports.addPresetAnswer = [
       const { questionId, answerText, marks } = req.body;
       const teacherId = req.user.userId;
 
-      // Get question
       const question = await QuestionModel.findById(questionId);
       if (!question) {
         return res.status(404).json({ error: 'Question not found' });
       }
 
-      // Verify quiz ownership
       const quiz = await QuizModel.findByIdAndTeacher(question.quiz_id, teacherId);
       if (!quiz) {
         return res.status(403).json({ error: 'Not authorized' });
       }
 
-      // Verify marks don't exceed question points
-      if (marks > question.points) {
-        return res.status(400).json({ error: `Marks cannot exceed ${question.points} points` });
-      }
-
-      const presetAnswerId = await PresetAnswerModel.create(questionId, answerText, marks);
+      const presetAnswerId = await AnswerKeyModel.create(questionId, answerText, marks);
 
       res.status(201).json({
         success: true,
-        message: 'Preset answer added successfully',
+        message: 'Grading criteria added successfully',
         presetAnswerId,
       });
     } catch (error) {
@@ -237,25 +257,23 @@ exports.addPresetAnswer = [
   },
 ];
 
-// Get preset answers for a question
+// Get preset answer keys
 exports.getPresetAnswers = async (req, res) => {
   try {
     const { questionId } = req.params;
     const teacherId = req.user.userId;
 
-    // Get question
     const question = await QuestionModel.findById(questionId);
     if (!question) {
       return res.status(404).json({ error: 'Question not found' });
     }
 
-    // Verify quiz ownership
     const quiz = await QuizModel.findByIdAndTeacher(question.quiz_id, teacherId);
     if (!quiz) {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
-    const presetAnswers = await PresetAnswerModel.getByQuestion(questionId);
+    const presetAnswers = await AnswerKeyModel.getByQuestion(questionId);
 
     res.json({
       success: true,
@@ -266,9 +284,9 @@ exports.getPresetAnswers = async (req, res) => {
   }
 };
 
-// Update preset answer
+// Update preset criteria
 exports.updatePresetAnswer = [
-  body('answerText').trim().notEmpty().withMessage('Answer text is required'),
+  body('answerText').trim().notEmpty().withMessage('Criteria text is required'),
   body('marks').isInt({ min: 0 }).withMessage('Marks must be a non-negative integer'),
 
   async (req, res) => {
@@ -282,28 +300,22 @@ exports.updatePresetAnswer = [
       const { answerText, marks } = req.body;
       const teacherId = req.user.userId;
 
-      const presetAnswer = await PresetAnswerModel.findById(presetAnswerId);
+      const presetAnswer = await AnswerKeyModel.findById(presetAnswerId);
       if (!presetAnswer) {
-        return res.status(404).json({ error: 'Preset answer not found' });
+        return res.status(404).json({ error: 'Grading criteria not found' });
       }
 
-      // Get question to verify ownership
       const question = await QuestionModel.findById(presetAnswer.question_id);
       const quiz = await QuizModel.findByIdAndTeacher(question.quiz_id, teacherId);
       if (!quiz) {
         return res.status(403).json({ error: 'Not authorized' });
       }
 
-      // Verify marks don't exceed question points
-      if (marks > question.points) {
-        return res.status(400).json({ error: `Marks cannot exceed ${question.points} points` });
-      }
-
-      await PresetAnswerModel.update(presetAnswerId, answerText, marks);
+      await AnswerKeyModel.update(presetAnswerId, answerText, marks);
 
       res.json({
         success: true,
-        message: 'Preset answer updated successfully',
+        message: 'Grading criteria updated successfully',
       });
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -311,29 +323,28 @@ exports.updatePresetAnswer = [
   },
 ];
 
-// Delete preset answer
+// Delete preset criteria
 exports.deletePresetAnswer = async (req, res) => {
   try {
     const { presetAnswerId } = req.params;
     const teacherId = req.user.userId;
 
-    const presetAnswer = await PresetAnswerModel.findById(presetAnswerId);
+    const presetAnswer = await AnswerKeyModel.findById(presetAnswerId);
     if (!presetAnswer) {
-      return res.status(404).json({ error: 'Preset answer not found' });
+      return res.status(404).json({ error: 'Grading criteria not found' });
     }
 
-    // Get question to verify ownership
     const question = await QuestionModel.findById(presetAnswer.question_id);
     const quiz = await QuizModel.findByIdAndTeacher(question.quiz_id, teacherId);
     if (!quiz) {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
-    await PresetAnswerModel.delete(presetAnswerId);
+    await AnswerKeyModel.delete(presetAnswerId);
 
     res.json({
       success: true,
-      message: 'Preset answer deleted successfully',
+      message: 'Grading criteria deleted successfully',
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

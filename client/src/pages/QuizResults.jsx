@@ -72,12 +72,12 @@ export default function QuizResults() {
 
         {topicStats.length > 0 && (
           <div className="card mb-4">
-            <div className="card-header">Topic Mastery</div>
+            <div className="card-header">Difficulty Mastery</div>
             <div className="card-body" style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                    <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600' }}>Topic</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600' }}>Difficulty</th>
                     <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600' }}>Questions</th>
                     <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600' }}>Answers</th>
                     <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600' }}>Accuracy</th>
@@ -170,7 +170,7 @@ export default function QuizResults() {
                         <td style={{ padding: '0.75rem' }}>{result.student_name}</td>
                         <td style={{ padding: '0.75rem' }}>{result.email}</td>
                         <td style={{ padding: '0.75rem' }}>
-                          <strong>{result.score}/{result.total_questions}</strong>
+                          <strong>{result.total_score}/{result.max_score}</strong>
                         </td>
                         <td style={{ padding: '0.75rem' }}>
                           <span className={`badge ${badge}`}>{result.percentage}%</span>

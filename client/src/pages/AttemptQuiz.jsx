@@ -280,15 +280,14 @@ export default function AttemptQuiz() {
                         {currentQuestion.question}
                       </div>
 
-                      {/* MCQ Options */}
-                      {currentQuestion.type === 'MCQ' && (
+                      {/* MCQ and TRUE_FALSE Options */}
+                      {(currentQuestion.type === 'MCQ' || currentQuestion.type === 'TRUE_FALSE') && (
                         <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                          {[1, 2, 3, 4].map((optionNum) => {
-                            const optionKey = `option${optionNum}`;
-                            const isSelected = answers[currentQuestion.id] === optionNum;
+                          {currentQuestion.options?.map((option) => {
+                            const isSelected = answers[currentQuestion.id] === option.id;
                             return (
                               <label
-                                key={optionNum}
+                                key={option.id}
                                 style={{
                                   display: 'flex',
                                   alignItems: 'center',
@@ -315,23 +314,23 @@ export default function AttemptQuiz() {
                                 <input
                                   type="radio"
                                   name={`question-${currentQuestion.id}`}
-                                  value={optionNum}
+                                  value={option.id}
                                   checked={isSelected}
-                                  onChange={() => handleMCQAnswerChange(currentQuestion.id, optionNum)}
+                                  onChange={() => handleMCQAnswerChange(currentQuestion.id, option.id)}
                                   style={{ marginRight: '0.75rem', cursor: 'pointer' }}
                                 />
                                 <span style={{
                                   fontWeight: isSelected ? '600' : '400',
                                   color: isSelected ? '#6366f1' : 'inherit'
                                 }}>
-                                  {currentQuestion[optionKey]}
+                                  {option.option_text}
                                 </span>
                               </label>
                             );
                           })}
                         </div>
                       )}
-
+                      
                       {/* Descriptive Answer */}
                       {currentQuestion.type === 'DESCRIPTIVE' && (
                         <div style={{ marginTop: '1rem' }}>
@@ -466,7 +465,7 @@ export default function AttemptQuiz() {
                   <div className="card-body">
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
                       {quiz?.questions?.map((question, index) => {
-                        const isAnswered = question.type === 'MCQ'
+                        const isAnswered = (question.type === 'MCQ' || question.type === 'TRUE_FALSE')
                           ? answers[question.id] !== undefined
                           : descriptiveAnswers[question.id];
                         const isActive = index === currentIndex;

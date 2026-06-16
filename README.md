@@ -2,6 +2,9 @@
 
 A modern, production-grade online quiz and exam platform built with MERN (MongoDB/MySQL, Express, React, Node.js) stack.
 
+> [!NOTE]
+> Detailed technical details, database schema table definitions, entity relationship diagrams (ERD), and flowcharts are available in the [Project Architecture & Database Design](file:///d:/WP/Quiz-System-MERN/PROJECT_ARCHITECTURE.md) document.
+
 ## Features
 
 - **User Authentication**: Register, login with role-based access (admin, teacher, student)

@@ -67,13 +67,13 @@ export default function QuizResult() {
           {/* Result Summary */}
           <div className="card mb-4">
             <div className="card-body" style={{ textAlign: 'center', padding: '2rem' }}>
-              <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Quiz Complete!</h1>
+              <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Quiz Attempt Summary</h1>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap' }}>
                 <div>
                   <div style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--primary)' }}>
-                    {result?.score}/{result?.total_questions}
+                    {result?.total_score}/{result?.max_score}
                   </div>
-                  <div style={{ color: 'var(--text-muted)' }}>Correct Answers</div>
+                  <div style={{ color: 'var(--text-muted)' }}>Points Earned</div>
                 </div>
                 <div>
                   <span className={`badge ${getBadgeColor(percentage)}`} style={{ fontSize: '1.5rem', padding: '0.75rem 1.5rem' }}>
@@ -82,8 +82,14 @@ export default function QuizResult() {
                 </div>
               </div>
 
+              {result?.descriptive_score > 0 && (
+                <div style={{ marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--text-body)' }}>
+                  MCQ Score: <strong>{result.mcq_score}</strong> &nbsp;·&nbsp; Descriptive Score: <strong>{result.descriptive_score}</strong>
+                </div>
+              )}
+
               <div style={{ marginTop: '1rem', color: 'var(--text-muted)', marginBottom: '2rem' }}>
-                Submitted on {new Date(result?.submitted_at).toLocaleString()}
+                Submitted on {new Date(result?.submitted_at).toLocaleString()} (Attempt #{result?.attempt_number})
               </div>
 
               <button
@@ -101,30 +107,83 @@ export default function QuizResult() {
               <h2 style={{ marginBottom: '1.5rem' }}>Review Your Answers</h2>
               {questions.map((question, index) => {
                 const answer = result.answers?.find((a) => a.question_id === question.id);
-                const isCorrect = answer?.selected_option === question.correct_option;
+                
+                // For MCQ / TRUE_FALSE questions
+                if (question.type === 'MCQ' || question.type === 'TRUE_FALSE') {
+                  const isCorrect = answer?.is_correct;
+                  const selectedOption = question.options?.find(o => o.id === answer?.selected_option_id);
+                  const correctOption = question.options?.find(o => o.is_correct);
 
+                  return (
+                    <div key={question.id} className={`question-card ${isCorrect ? 'correct' : 'incorrect'}`}>
+                      <div className="question-number">Question {index + 1} ({question.type})</div>
+                      <div className="question-text">{question.question}</div>
+
+                      <div style={{ marginTop: '1rem', backgroundColor: isCorrect ? '#f0fdf4' : '#fef2f2', padding: '1rem', borderRadius: 'var(--radius-sm)' }}>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <strong>Your Answer:</strong>
+                        </div>
+                        <div style={{ marginBottom: '1rem', color: isCorrect ? 'var(--success)' : 'var(--danger)' }}>
+                          {selectedOption ? selectedOption.option_text : 'Not answered'}
+                        </div>
+
+                        {!isCorrect && (
+                          <>
+                            <div style={{ marginBottom: '0.5rem' }}>
+                              <strong>Correct Answer:</strong>
+                            </div>
+                            <div style={{ color: 'var(--success)' }}>
+                              {correctOption ? correctOption.option_text : 'N/A'}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+
+                // For Descriptive questions
+                const isGraded = answer?.is_correct !== null;
                 return (
-                  <div key={question.id} className={`question-card ${isCorrect ? 'correct' : 'incorrect'}`}>
-                    <div className="question-number">Question {index + 1}</div>
+                  <div key={question.id} className={`question-card ${isGraded ? (answer?.is_correct ? 'correct' : 'incorrect') : 'pending'}`}>
+                    <div className="question-number" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Question {index + 1} (Descriptive)</span>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        color: isGraded ? '#059669' : '#d97706',
+                        background: isGraded ? '#d1fae5' : '#fef3c7',
+                        padding: '0.15rem 0.5rem',
+                        borderRadius: '999px'
+                      }}>
+                        {isGraded ? `Graded: ${answer?.marks_obtained || 0} pts` : 'Pending Grading'}
+                      </span>
+                    </div>
                     <div className="question-text">{question.question}</div>
 
-                    <div style={{ marginTop: '1rem', backgroundColor: isCorrect ? '#f0fdf4' : '#fef2f2', padding: '1rem', borderRadius: 'var(--radius-sm)' }}>
+                    <div style={{ marginTop: '1rem', backgroundColor: '#f9fafb', padding: '1rem', borderRadius: 'var(--radius-sm)' }}>
                       <div style={{ marginBottom: '0.5rem' }}>
                         <strong>Your Answer:</strong>
                       </div>
-                      <div style={{ marginBottom: '1rem', color: isCorrect ? 'var(--success)' : 'var(--danger)' }}>
-                        {answer?.selected_option ? question[`option${answer.selected_option}`] : 'Not answered'}
+                      <div style={{ marginBottom: '1rem', whiteSpace: 'pre-wrap' }}>
+                        {answer?.answer_text || '(No answer provided)'}
                       </div>
 
-                      {!isCorrect && (
-                        <>
-                          <div style={{ marginBottom: '0.5rem' }}>
-                            <strong>Correct Answer:</strong>
-                          </div>
-                          <div style={{ color: 'var(--success)' }}>
-                            {question[`option${question.correct_option}`]}
-                          </div>
-                        </>
+                      {answer?.image_path && (
+                        <div style={{ marginBottom: '1rem' }}>
+                          <a href={answer.image_path} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.82rem', color: 'var(--primary)', textDecoration: 'underline' }}>
+                            View Uploaded Workspace Image
+                          </a>
+                        </div>
+                      )}
+
+                      {isGraded && answer?.teacher_feedback && (
+                        <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '0.75rem', marginTop: '0.75rem' }}>
+                          <strong>Teacher Feedback:</strong>
+                          <p style={{ color: '#4b5563', margin: '0.25rem 0 0', fontSize: '0.9rem' }}>
+                            {answer.teacher_feedback}
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>

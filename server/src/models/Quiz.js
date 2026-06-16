@@ -1,10 +1,10 @@
 const pool = require('../config/database');
 
 class QuizModel {
-  static async create(teacherId, title, description, timeLimit) {
+  static async create(teacherId, title, description, timeLimit, status = 'draft') {
     const [result] = await pool.query(
-      'INSERT INTO quizzes (teacher_id, title, description, time_limit) VALUES (?, ?, ?, ?)',
-      [teacherId, title, description, timeLimit]
+      'INSERT INTO quizzes (teacher_id, title, description, time_limit, status) VALUES (?, ?, ?, ?, ?)',
+      [teacherId, title, description, timeLimit, status]
     );
     return result.insertId;
   }
@@ -24,8 +24,9 @@ class QuizModel {
 
   static async getByTeacher(teacherId) {
     const [rows] = await pool.query(
-      `SELECT q.*, (SELECT COUNT(*) FROM questions WHERE quiz_id = q.id) AS question_count,
-              (SELECT COUNT(*) FROM results WHERE quiz_id = q.id) AS attempt_count
+      `SELECT q.*, 
+              (SELECT COUNT(*) FROM quiz_questions WHERE quiz_id = q.id) AS question_count,
+              (SELECT COUNT(*) FROM quiz_attempts WHERE quiz_id = q.id AND status = 'submitted') AS attempt_count
        FROM quizzes q
        WHERE q.teacher_id = ?
        ORDER BY q.created_at DESC`,
@@ -37,8 +38,8 @@ class QuizModel {
   static async getAll() {
     const [rows] = await pool.query(
       `SELECT q.*, u.name AS teacher_name,
-              (SELECT COUNT(*) FROM questions WHERE quiz_id = q.id) AS question_count,
-              (SELECT COUNT(*) FROM results WHERE quiz_id = q.id) AS attempt_count
+              (SELECT COUNT(*) FROM quiz_questions WHERE quiz_id = q.id) AS question_count,
+              (SELECT COUNT(*) FROM quiz_attempts WHERE quiz_id = q.id AND status = 'submitted') AS attempt_count
        FROM quizzes q
        JOIN users u ON q.teacher_id = u.id
        ORDER BY q.created_at DESC`
@@ -46,10 +47,10 @@ class QuizModel {
     return rows;
   }
 
-  static async update(id, title, description, timeLimit) {
+  static async update(id, title, description, timeLimit, status) {
     await pool.query(
-      'UPDATE quizzes SET title = ?, description = ?, time_limit = ? WHERE id = ?',
-      [title, description, timeLimit, id]
+      'UPDATE quizzes SET title = ?, description = ?, time_limit = ?, status = ? WHERE id = ?',
+      [title, description, timeLimit, status, id]
     );
   }
 

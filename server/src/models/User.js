@@ -60,7 +60,7 @@ class UserModel {
     const [rows] = await pool.query(
       `SELECT 
         (SELECT COUNT(*) FROM quizzes WHERE teacher_id = ?) AS quiz_count,
-        (SELECT COUNT(*) FROM results WHERE student_id = ?) AS attempt_count`,
+        (SELECT COUNT(*) FROM quiz_attempts WHERE student_id = ? AND status = 'submitted') AS attempt_count`,
       [userId, userId]
     );
     return rows[0] || { quiz_count: 0, attempt_count: 0 };
