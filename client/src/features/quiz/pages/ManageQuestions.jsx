@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { questionAPI, quizAPI } from '../../shared/services/api';
-import Alert from '../../shared/components/Alert';
+import { Alert, Tooltip } from '../../shared/components';
 import '../styles/ManageQuestions.scss';
 import { Edit2, Trash2, X, Image as ImageIcon } from 'lucide-react';
 
@@ -103,6 +103,7 @@ export default function ManageQuestions() {
     setError('');
     setPreviewImage(question.image_path || null);
     setShowModal(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleChange = (e) => {
@@ -252,216 +253,245 @@ export default function ManageQuestions() {
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
         {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
-
-        {/* ── Two-Column Layout ── */}
-        <div className="manage-questions-grid">
-
-          {/* ══ LEFT: Add / Edit Form ══ */}
+        <div className="manage-questions-layout-vertical">
+          {/* ── Add / Edit Form Card ── */}
           <div className="card manage-questions-form-card">
             <div className="card-body">
-              {/* Form header */}
-              <div className="manage-questions-form-title-wrapper">
-                <h2>
-                  {editingId ? 'Edit Question' : 'Add New Question'}
-                </h2>
-              </div>
-
-              {/* Question Type Selector */}
-              <div className="manage-questions-type-selector-wrapper">
-                <label className="form-label">Question Type *</label>
-                <div className="manage-questions-type-radios">
-                  {[
-                    { val: 'MCQ', label: 'Multiple Choice' },
-                    { val: 'TRUE_FALSE', label: 'True / False' },
-                    { val: 'DESCRIPTIVE', label: 'Descriptive' }
-                  ].map((t) => (
-                    <label key={t.val} className={`manage-questions-type-label ${editingId ? 'disabled' : ''}`}>
-                      <input
-                        type="radio"
-                        name="questionType"
-                        value={t.val}
-                        checked={questionType === t.val}
-                        onChange={(e) => {
-                          if (!editingId) setQuestionType(e.target.value);
-                        }}
-                        disabled={!!editingId}
-                      />
-                      <span>{t.label}</span>
-                    </label>
-                  ))}
+              <div className="manage-questions-form-header-row">
+                <h2>{editingId ? 'Edit Question' : 'Add New Question'}</h2>
+                <div className="manage-questions-type-selector-wrapper">
+                  <span className="type-selector-label">Question Type</span>
+                  <div className="manage-questions-segmented-control">
+                    {[
+                      { val: 'MCQ', label: 'Multiple Choice' },
+                      { val: 'TRUE_FALSE', label: 'True / False' },
+                      { val: 'DESCRIPTIVE', label: 'Descriptive' }
+                    ].map((t) => (
+                      <Tooltip
+                        key={t.val}
+                        text={
+                          t.val === 'MCQ'
+                            ? 'MCQ (auto-graded)'
+                            : t.val === 'TRUE_FALSE'
+                            ? 'True/False (auto-graded)'
+                            : 'Descriptive (manually graded)'
+                        }
+                        position="bottom"
+                      >
+                        <button
+                          type="button"
+                          className={`segment-btn ${questionType === t.val ? 'active' : ''} ${editingId ? 'disabled' : ''}`}
+                          onClick={() => {
+                            if (!editingId) setQuestionType(t.val);
+                          }}
+                          disabled={!!editingId}
+                        >
+                          {t.label}
+                        </button>
+                      </Tooltip>
+                    ))}
+                  </div>
                 </div>
               </div>
 
               <form ref={formRef} onSubmit={editingId ? handleUpdateQuestion : handleSubmit}>
-                {/* Topic */}
-                <div className="mb-3">
-                  <label className="form-label">Topic</label>
-                  <input
-                    type="text"
-                    name="topic"
-                    className="manage-questions-input auth-input"
-                    placeholder="e.g. Algebra, Networking, Photosynthesis"
-                    value={formData.topic}
-                    onChange={handleChange}
-                  />
-                  <div className="form-text">Optional, used for analytics.</div>
-                </div>
+                {/* ── Metadata Row ── */}
+                <div className="form-row form-metadata-row">
+                  {/* Topic Field */}
+                  <div className="metadata-field">
+                    <label className="form-label">Topic</label>
+                    <Tooltip text="Used for categorization and granular topic analytics" position="top">
+                      <input
+                        type="text"
+                        name="topic"
+                        className="manage-questions-input"
+                        placeholder="e.g. Algebra, Networking, Photosynthesis"
+                        value={formData.topic}
+                        onChange={handleChange}
+                      />
+                    </Tooltip>
+                  </div>
 
-                {/* Difficulty & Points row */}
-                <div className="manage-questions-form-row">
-                  <div>
+                  {/* Difficulty Field */}
+                  <div className="metadata-field">
                     <label className="form-label">Difficulty *</label>
-                    <select
-                      name="difficulty"
-                      className="manage-questions-select auth-input"
-                      value={formData.difficulty || 'medium'}
-                      onChange={handleChange}
-                      required
-                    >
-                      <option value="easy">Easy</option>
-                      <option value="medium">Medium</option>
-                      <option value="hard">Hard</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label">Points</label>
-                    <input
-                      type="number"
-                      name="points"
-                      className="manage-questions-input auth-input"
-                      min="1"
-                      value={formData.points}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
-
-                {/* Image Upload */}
-                <div className="mb-3">
-                  <label className="form-label">Upload Image (Optional)</label>
-                  <div className="manage-questions-upload-zone"
-                    onClick={() => fileInputRef.current?.click()}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.style.borderColor = '#6366f1';
-                      e.currentTarget.style.background = '#eef2ff';
-                    }}
-                    onDragLeave={(e) => {
-                      e.currentTarget.style.borderColor = '#e5e7eb';
-                      e.currentTarget.style.background = '#f9fafb';
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.style.borderColor = '#e5e7eb';
-                      e.currentTarget.style.background = '#f9fafb';
-                      if (e.dataTransfer.files?.[0]) {
-                        fileInputRef.current.files = e.dataTransfer.files;
-                        handleImageChange({ target: { files: e.dataTransfer.files } });
-                      }
-                    }}
-                  >
-                    <div style={{ textAlign: 'center' }}>
-                      <ImageIcon size={24} className="upload-icon" />
-                      <div className="upload-text">
-                        Drag and drop or click to select
-                      </div>
-                      <div className="upload-subtext">
-                        JPG, PNG or PDF (Max 5MB)
-                      </div>
-                    </div>
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,application/pdf"
-                    onChange={handleImageChange}
-                    style={{ display: 'none' }}
-                  />
-                </div>
-
-                {/* Image Preview */}
-                {previewImage && (
-                  <div className="manage-questions-preview-box">
-                    <span>
-                      {typeof previewImage === 'string' && previewImage.startsWith('data:') ? '✓ Image selected' : previewImage}
-                    </span>
-                    <button
-                      type="button"
-                      className="btn-remove-preview"
-                      onClick={() => {
-                        setSelectedImage(null);
-                        setPreviewImage(null);
-                        if (fileInputRef.current) fileInputRef.current.value = '';
-                      }}
-                    >
-                      ✕ Remove
-                    </button>
-                  </div>
-                )}
-
-                {/* Question text */}
-                <div className="mb-3">
-                  <label className="form-label">Question *</label>
-                  <textarea
-                    name="question"
-                    className="manage-questions-textarea auth-input"
-                    rows="3"
-                    placeholder="Enter the question..."
-                    value={formData.question}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                {/* MCQ or TRUE_FALSE Options */}
-                {(questionType === 'MCQ' || questionType === 'TRUE_FALSE') && (
-                  <>
-                    {questionType === 'MCQ' ? (
-                      [1, 2, 3, 4].map((num) => (
-                        <div key={num} className="mb-3">
-                          <label className="form-label">Option {num} *</label>
-                          <input
-                            type="text"
-                            name={`option${num}`}
-                            className="manage-questions-input auth-input"
-                            placeholder={`Enter option ${num}...`}
-                            value={formData[`option${num}`]}
-                            onChange={handleChange}
-                            required={questionType === 'MCQ'}
-                          />
-                        </div>
-                      ))
-                    ) : (
-                      <div className="manage-questions-info-box">
-                        Options auto-configured: <strong>Option 1 = True</strong>, <strong>Option 2 = False</strong>.
-                      </div>
-                    )}
-
-                    {/* Correct Option */}
-                    <div className="mb-4">
-                      <label className="form-label">Correct Option *</label>
+                    <Tooltip text="Helps in structuring balanced quiz papers" position="top">
                       <select
-                        name="correctOption"
-                        className="manage-questions-select auth-input"
-                        value={formData.correctOption}
+                        name="difficulty"
+                        className="manage-questions-select"
+                        value={formData.difficulty || 'medium'}
                         onChange={handleChange}
                         required
                       >
-                        <option value="1">{questionType === 'MCQ' ? 'Option 1' : 'True'}</option>
-                        <option value="2">{questionType === 'MCQ' ? 'Option 2' : 'False'}</option>
-                        {questionType === 'MCQ' && (
-                          <>
-                            <option value="3">Option 3</option>
-                            <option value="4">Option 4</option>
-                          </>
-                        )}
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
                       </select>
-                    </div>
-                  </>
-                )}
+                    </Tooltip>
+                  </div>
 
-                {/* Buttons */}
-                <div className="manage-questions-buttons-row">
+                  {/* Points Field */}
+                  <div className="metadata-field">
+                    <label className="form-label">Points *</label>
+                    <Tooltip text="Weight of this question in the total score" position="top">
+                      <input
+                        type="number"
+                        name="points"
+                        className="manage-questions-input"
+                        min="1"
+                        value={formData.points}
+                        onChange={handleChange}
+                        required
+                      />
+                    </Tooltip>
+                  </div>
+
+                  {/* Image Upload Field */}
+                  <div className="metadata-field image-upload-field">
+                    <label className="form-label">Upload Image (Optional)</label>
+                    <Tooltip text="Attach a supportive diagram, code snippet or math proof" position="top">
+                      <div className="manage-questions-image-section">
+                        <div className="upload-container">
+                          <div
+                            className="manage-questions-upload-zone-compact"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <ImageIcon size={16} className="upload-icon" />
+                            <span className="upload-text">Select Image / PDF</span>
+                          </div>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf"
+                            onChange={handleImageChange}
+                            style={{ display: 'none' }}
+                          />
+                        </div>
+
+                        {/* Image Preview */}
+                        {previewImage && (
+                          <div className="manage-questions-preview-box-compact">
+                            <div className="preview-info">
+                              {(() => {
+                                const isImagePreview = typeof previewImage === 'string' &&
+                                  (previewImage.startsWith('data:image/') || previewImage.startsWith('http') || previewImage.match(/\.(jpeg|jpg|gif|png)$/i));
+                                return isImagePreview ? (
+                                  <img src={previewImage} alt="Preview" className="img-preview" />
+                                ) : (
+                                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', padding: '0 0.25rem' }}>PDF</span>
+                                );
+                              })()}
+                              <span className="file-info" title={selectedImage ? selectedImage.name : (typeof previewImage === 'string' ? previewImage.split('/').pop() : 'Image')}>
+                                {selectedImage ? selectedImage.name : (typeof previewImage === 'string' ? previewImage.split('/').pop() : 'Image')}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className="btn-remove-preview"
+                              onClick={() => {
+                                setSelectedImage(null);
+                                setPreviewImage(null);
+                                if (fileInputRef.current) fileInputRef.current.value = '';
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </Tooltip>
+                  </div>
+                </div>
+
+                {/* ── Content Row ── */}
+                <div className={`form-row form-content-row ${questionType === 'DESCRIPTIVE' ? 'single-column' : 'two-columns'}`}>
+                  {/* Left Side: Question Input */}
+                  <div className="form-group question-text-group">
+                    <label className="form-label">Question Text *</label>
+                    <textarea
+                      name="question"
+                      className="manage-questions-textarea"
+                      rows="4"
+                      placeholder="Enter the question text..."
+                      value={formData.question}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  {/* Right Side: Options (if MCQ or TRUE_FALSE) */}
+                  {questionType === 'MCQ' && (
+                    <div className="manage-questions-options-section">
+                      <label className="form-label">Options & Correct Answer *</label>
+                      <div className="options-grid-2x2">
+                        {[1, 2, 3, 4].map((num) => {
+                          const isCorrect = formData.correctOption === num;
+                          return (
+                            <div key={num} className={`option-input-group ${isCorrect ? 'is-correct' : ''}`}>
+                              <Tooltip text="Mark this choice as the correct answer" position="top">
+                                <div className="option-radio-wrapper">
+                                  <input
+                                    type="radio"
+                                    name="correctOption"
+                                    value={num}
+                                    checked={isCorrect}
+                                    onChange={handleChange}
+                                    className="correct-option-radio"
+                                  />
+                                </div>
+                              </Tooltip>
+                              <input
+                                type="text"
+                                name={`option${num}`}
+                                className="option-text-input"
+                                placeholder={`Option ${num}`}
+                                value={formData[`option${num}`]}
+                                onChange={handleChange}
+                                required={questionType === 'MCQ'}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {questionType === 'TRUE_FALSE' && (
+                    <div className="manage-questions-options-section">
+                      <label className="form-label">Select Correct Answer *</label>
+                      <div className="true-false-grid">
+                        {[
+                          { val: 1, label: 'True' },
+                          { val: 2, label: 'False' }
+                        ].map((item) => {
+                          const isCorrect = formData.correctOption === item.val;
+                          return (
+                            <label key={item.val} className={`tf-option-label ${isCorrect ? 'is-correct' : ''}`}>
+                              <input
+                                type="radio"
+                                name="correctOption"
+                                value={item.val}
+                                checked={isCorrect}
+                                onChange={handleChange}
+                                className="correct-option-radio"
+                              />
+                              <span>{item.label}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {questionType === 'DESCRIPTIVE' && (
+                    <div className="manage-question-descriptive-indicator">
+                      ✓ Descriptive question - Students will provide long-form text answers (manually graded)
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Form Actions / Buttons ── */}
+                <div className="form-row form-actions-row manage-questions-buttons-row">
                   <button
                     type="submit"
                     className="btn btn-primary"
@@ -483,14 +513,18 @@ export default function ManageQuestions() {
             </div>
           </div>
 
-          {/* ══ RIGHT: Question List ══ */}
-          <div>
+          {/* ── Questions List ── */}
+          <div className="manage-questions-list-section">
+            <div className="list-section-header">
+              <h2>Added Questions ({questions.length})</h2>
+            </div>
+
             {questions.length === 0 ? (
               <div className="card">
                 <div className="card-body">
                   <div className="empty-state">
                     <div className="empty-state-text">
-                      No questions yet. Add your first question on the left.
+                      No questions yet. Add your first question above.
                     </div>
                   </div>
                 </div>

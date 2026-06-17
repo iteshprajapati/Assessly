@@ -3,6 +3,7 @@ const QuestionModel = require('../db/Question');
 const QuizModel = require('../db/Quiz');
 const QuizAttemptModel = require('../db/QuizAttempt');
 const ResultModel = require('../db/Result');
+const pool = require('../config/database');
 const path = require('path');
 const fs = require('fs');
 
