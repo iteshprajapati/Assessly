@@ -38,7 +38,7 @@ const FAQ_ITEMS = [
   },
   {
     question: "What happens if my internet disconnects during a quiz?",
-    answer: "QuizPortal has built-in auto-saving. If your connection drops, your completed answers are safe. However, the quiz timer continues on the server and will auto-submit once the time runs out."
+    answer: "QuizFlow has built-in auto-saving. If your connection drops, your completed answers are safe. However, the quiz timer continues on the server and will auto-submit once the time runs out."
   },
   {
     question: "How is quiz duration enforced?",
@@ -77,7 +77,7 @@ export default function Home() {
 
 
           <h1 className="home-title">
-            QuizPortal
+            QuizFlow
           </h1>
 
           <p className="home-tagline">
@@ -91,14 +91,9 @@ export default function Home() {
                 Go to Dashboard
               </Link>
             ) : (
-              <>
-                <Link to="/login" className="home-btn-primary">
-                  Login
-                </Link>
-                <Link to="/register" className="home-btn-secondary">
-                  Register
-                </Link>
-              </>
+              <Link to="/login" className="home-btn-black-rounded">
+                Start a Quiz
+              </Link>
             )}
           </div>
         </div>
@@ -132,7 +127,7 @@ export default function Home() {
         <div className="home-faq-section">
           <div className="home-faq-header">
             <h2 className="home-faq-title">Frequently Asked Questions</h2>
-            <p className="home-faq-subtitle">Everything you need to know about the QuizPortal platform.</p>
+            <p className="home-faq-subtitle">Everything you need to know about the QuizFlow platform.</p>
           </div>
           <div className="home-faq-list">
             {FAQ_ITEMS.map((faq, idx) => {
