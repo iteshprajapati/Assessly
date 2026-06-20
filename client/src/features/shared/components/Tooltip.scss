@@ -95,8 +95,7 @@
   }
 
   // Hover/Focus triggers
-  &:hover,
-  &:focus-within {
+  &:hover {
     .tooltip-bubble {
       opacity: 1;
       visibility: visible;
