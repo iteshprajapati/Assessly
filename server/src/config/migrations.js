@@ -120,6 +120,36 @@ const tables = {
     user_agent TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB;`,
+
+  classrooms: `CREATE TABLE IF NOT EXISTS classrooms (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    code VARCHAR(10) NOT NULL UNIQUE,
+    teacher_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB;`,
+
+  classroom_students: `CREATE TABLE IF NOT EXISTS classroom_students (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    classroom_id INT NOT NULL,
+    student_id INT NOT NULL,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (classroom_id) REFERENCES classrooms(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (classroom_id, student_id)
+  ) ENGINE=InnoDB;`,
+
+  classroom_quizzes: `CREATE TABLE IF NOT EXISTS classroom_quizzes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    classroom_id INT NOT NULL,
+    quiz_id INT NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (classroom_id) REFERENCES classrooms(id) ON DELETE CASCADE,
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,
+    UNIQUE (classroom_id, quiz_id)
   ) ENGINE=InnoDB;`
 };
 
@@ -133,6 +163,9 @@ async function runMigrations() {
       
       // Drop existing tables in reverse dependency order to prevent FK violations
       const dropQueries = [
+        'DROP TABLE IF EXISTS classroom_quizzes',
+        'DROP TABLE IF EXISTS classroom_students',
+        'DROP TABLE IF EXISTS classrooms',
         'DROP TABLE IF EXISTS admin_logs',
         'DROP TABLE IF EXISTS results',
         'DROP TABLE IF EXISTS answers',
@@ -193,6 +226,9 @@ async function runMigrations() {
     await connection.query(tables.answer_keys);
     await connection.query(tables.otp_codes);
     await connection.query(tables.admin_logs);
+    await connection.query(tables.classrooms);
+    await connection.query(tables.classroom_students);
+    await connection.query(tables.classroom_quizzes);
 
     console.log('✓ Database migrations completed successfully');
   } catch (error) {

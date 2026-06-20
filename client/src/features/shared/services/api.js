@@ -154,4 +154,17 @@ export const resultAPI = {
   checkAttempted: (quizId) => api.get(`/results/check/${quizId}`),
 };
 
+export const classroomAPI = {
+  createClassroom: (data) => api.post('/classrooms', data),
+  getClassrooms: () => api.get('/classrooms'),
+  getClassroom: (id) => api.get(`/classrooms/${id}`),
+  deleteClassroom: (id) => api.delete(`/classrooms/${id}`),
+  joinClassroom: (code) => api.post('/classrooms/join', { code }),
+  assignQuiz: (classroomId, quizId) => api.post(`/classrooms/${classroomId}/quizzes`, { quizId }),
+  unassignQuiz: (classroomId, quizId) => api.delete(`/classrooms/${classroomId}/quizzes/${quizId}`),
+  getAssignedQuizzes: () => api.get('/classrooms/student/quizzes'),
+  removeStudent: (classroomId, studentId) => api.delete(`/classrooms/${classroomId}/students/${studentId}`),
+  leaveClassroom: (classroomId) => api.delete(`/classrooms/${classroomId}/leave`),
+};
+
 export default api;

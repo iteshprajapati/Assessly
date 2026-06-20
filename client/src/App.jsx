@@ -6,7 +6,7 @@ import { Navbar, ProtectedRoute } from './features/shared/components';
 // Pages
 import { Home } from './features/home/pages';
 import { Login, Register } from './features/auth/pages';
-import { AdminDashboard, TeacherDashboard, StudentDashboard } from './features/dashboard/pages';
+import { AdminDashboard, TeacherDashboard, StudentDashboard, TeacherClassroomDetails, StudentClassroomDetails } from './features/dashboard/pages';
 import { CreateQuiz, AttemptQuiz, QuizResult, QuizResults, ManageQuestions } from './features/quiz/pages';
 
 // Styles
@@ -52,6 +52,14 @@ function App() {
               }
             />
             <Route
+              path="/teacher/classroom/:classroomId"
+              element={
+                <ProtectedRoute requiredRole="teacher">
+                  <TeacherClassroomDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/teacher/create-quiz"
               element={
                 <ProtectedRoute requiredRole="teacher">
@@ -90,6 +98,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="student">
                   <StudentDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/classroom/:classroomId"
+              element={
+                <ProtectedRoute requiredRole="student">
+                  <StudentClassroomDetails />
                 </ProtectedRoute>
               }
             />
