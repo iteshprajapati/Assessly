@@ -32,29 +32,29 @@ fileApi.interceptors.request.use((config) => {
 });
 
 // Handle errors
+const handleAuthError = (error) => {
+  const isPublicRoute = error.config?.url && 
+    error.config.url.includes('/auth/') && 
+    !error.config.url.includes('/auth/me');
+
+  if (error.response?.status === 401 && !isPublicRoute) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  }
+  return Promise.reject(error);
+};
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
+  handleAuthError
 );
 
 fileApi.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
+  handleAuthError
 );
+
 
 // Auth APIs
 export const authAPI = {
