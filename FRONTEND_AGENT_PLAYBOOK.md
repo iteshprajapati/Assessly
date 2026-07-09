@@ -1060,13 +1060,46 @@ export async function uploadFileAPI(resourceId, file, { fieldName = 'file', reso
 ```
 
 ### D. Component Memoization & Render Loop Safeguards
-* **useMemo**: Use this hook to wrap complex filtering, ordering, or search indexing logic on lists. This prevents calculations on every single minor DOM render:
-  ```javascript
-  const filteredData = useMemo(() => {
-      return data.filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
-  }, [data, query]);
-  ```
-* **useCallback**: Wrap any callbacks passed down as props to children components inside `useCallback` to prevent unnecessary component updates.
+Memoization prevents redundant computations and rendering cycles by caching values, function instances, or component layouts.
+
+#### 1. Values Caching with `useMemo`
+Use `useMemo` to wrap expensive CPU computations (like multi-field filtering, sorting, or data transformation) so they only run when their source inputs actually change.
+```javascript
+// Good: Avoids recalculating filtered list on unrelated state changes (like theme toggle)
+const filteredData = useMemo(() => {
+    return data.filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
+}, [data, query]);
+```
+
+#### 2. Stable Callbacks Reference with `useCallback`
+In React, functions defined inside a component are recreated on every render. If passed to memoized children, this triggers child re-renders. Wrap callbacks in `useCallback` to preserve reference identity.
+```javascript
+// Good: Prevents recreation of click handlers unless actionLoading changes
+const handleDelete = useCallback((id) => {
+    deleteRecord(id);
+}, [deleteRecord]);
+```
+
+#### 3. Component-Level Caching with `React.memo`
+Wrap pure presentational (dumb) components in `React.memo` to skip re-rendering if their input props have not changed.
+```javascript
+import React, { memo } from 'react';
+
+export const ListRow = memo(({ item, onDelete }) => {
+    return (
+        <div className="list-row">
+            <span>{item.name}</span>
+            <button onClick={() => onDelete(item.id)}>Delete</button>
+        </div>
+    );
+});
+
+ListRow.displayName = 'ListRow'; // Mandatory for debug tool tracing
+```
+
+#### 4. The Golden Rules of Memoization
+* **Don't over-memoize**: Memoization incurs a memory and performance overhead (comparing dependency arrays). Avoid it for trivial computations (e.g. basic arithmetic, primitive formatting, or static arrays).
+* **Reference types check**: Dependency arrays evaluate changes via strict equality (`===`). If an object or array is a dependency, ensure that reference itself is memoized.
 
 ### E. Memory Leak Cleanups
 Always clean up global side effects (such as socket connections, window scroll event listeners, or timer intervals) in the cleanup function of `useEffect` blocks:
@@ -1134,6 +1167,31 @@ export default defineConfig({
     }
   }
 });
+```
+
+#### 3. Component-Level Lazy Loading (On-Demand Bundles)
+For heavy components not immediately required at initial page render (e.g. rich-text editors, complex dashboard charts, or form modals), lazy load them inline to minimize initial load weight:
+```javascript
+import React, { useState, lazy, Suspense } from 'react';
+
+// Lazy load the heavy chart component
+const HeavyAnalyticsChart = lazy(() => import('../components/HeavyAnalyticsChart'));
+
+export const AnalyticsDashboard = () => {
+    const [showChart, setShowChart] = useState(false);
+
+    return (
+        <div className="analytics-section">
+            <button onClick={() => setShowChart(true)}>Load Visual Report</button>
+            
+            {showChart && (
+                <Suspense fallback={<div>Generating Chart Modules...</div>}>
+                    <HeavyAnalyticsChart />
+                </Suspense>
+            )}
+        </div>
+    );
+};
 ```
 
 ---
@@ -1242,10 +1300,16 @@ const DashboardPage = () => {
 };
 ```
 
-### H. Input Debouncing & Search Throttling (Network Mitigation)
-To prevent network congestion and backend overload caused by firing API calls on every keystroke, always debounce search inputs. Delay the API query until the user stops typing for a designated period (e.g., 300ms).
+### H. Throttling and Debouncing (Event & Network Mitigation)
+To prevent network congestion, performance degradation, and UI stuttering caused by firing actions on rapid user inputs or high-frequency browser events (like scrolling/resize), utilize debouncing and throttling.
 
-#### 1. Reusable `useDebounce` Hook (`client/src/features/shared/hooks/useDebounce.js`)
+| Technique | Behavior | Ideal Use Cases |
+| :--- | :--- | :--- |
+| **Debounce** | Delays execution until a specified quiet period (no triggers) has passed. | Search-as-you-type inputs, form auto-saving, layout adjustment on window resize finish. |
+| **Throttle** | Limits execution to a maximum of once per specified time interval. | Infinite scroll triggers, window resize tracking, button double-click prevention. |
+
+#### 1. Debouncing Implementation
+##### Reusable `useDebounce` Hook (`client/src/features/shared/hooks/useDebounce.js`)
 ```javascript
 import { useState, useEffect } from 'react';
 
@@ -1265,7 +1329,7 @@ export const useDebounce = (value, delay = 300) => {
 };
 ```
 
-#### 2. Wiring the Debounce in Components
+##### Wiring the Debounce in Search Components
 ```javascript
 import React, { useState, useEffect } from 'react';
 import { useDebounce } from '../../shared/hooks/useDebounce';
@@ -1274,10 +1338,9 @@ import FormField from '../../shared/components/FormField';
 
 export const SearchableDirectory = () => {
     const [search, setSearch] = useState('');
-    const debouncedSearch = useDebounce(search, 300); // 300ms throttle delay
+    const debouncedSearch = useDebounce(search, 300);
     const { loadDataList } = use[ResourceName]();
 
-    // Trigger API queries only when debouncedSearch state changes and settles
     useEffect(() => {
         loadDataList({ search: debouncedSearch });
     }, [debouncedSearch, loadDataList]);
@@ -1294,16 +1357,48 @@ export const SearchableDirectory = () => {
 };
 ```
 
-### I. Dynamic Media & Asset Optimization
-Unoptimized visual assets cause large layout shifts and block rendering threads. Strictly apply these standards to media elements:
+#### 2. Throttling Implementation
+##### Reusable Event Throttle Utility (`client/src/features/shared/utils/throttle.js`)
+```javascript
+export const throttle = (func, limit = 300) => {
+    let inThrottle;
+    return function (...args) {
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => (inThrottle = false), limit);
+        }
+    };
+};
+```
 
-1. **Lazy Load Offscreen Images**:
-   Attach `loading="lazy"` to defer downloading images until they enter the viewport window.
-2. **Asynchronous Decoding**:
-   Attach `decoding="async"` to process image raw decoding off the browser's primary rendering thread.
-3. **Prevent Cumulative Layout Shifts (CLS)**:
-   Explicitly define `width` and `height` dimensional properties (or aspect-ratio rules in SCSS) so the browser reserves block spacing before the image files resolve.
+##### Wiring Throttle for High-Frequency Events
+```javascript
+import React, { useEffect, useState } from 'react';
+import { throttle } from '../../shared/utils/throttle';
 
+export const ScrollTracker = () => {
+    const [scrollPosition, setScrollPosition] = useState(0);
+
+    useEffect(() => {
+        const handleScroll = throttle(() => {
+            setScrollPosition(window.scrollY);
+        }, 150); // Updates state at most once every 150ms
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    return <div className="scroll-indicator">Position: {scrollPosition}px</div>;
+};
+```
+
+### I. Image Lazy Loading & Dynamic Media Optimization
+Unoptimized images are a primary cause of low performance scores, high data usage, and layout shifts (CLS). Always optimize and lazy load media.
+
+#### 1. Native Lazy Loading & Decoding
+For standard images, attach the `loading="lazy"` and `decoding="async"` attributes, and always define explicit sizes or use CSS aspect ratios to avoid layout shifts.
 ```html
 <img
     src={graphicUrl}
@@ -1314,6 +1409,143 @@ Unoptimized visual assets cause large layout shifts and block rendering threads.
     height="240"
     className="media-thumbnail-element"
 />
+```
+
+#### 2. Advanced Viewport-Aware Lazy Image Component (`client/src/features/shared/components/LazyImage.jsx`)
+To create premium visuals, load images only when they approach the user's viewport. Show an animated skeleton loader until the image finishes loading, then transition with a smooth fade-in.
+```javascript
+import React, { useState, useEffect, useRef } from 'react';
+import { Skeleton } from './Skeleton';
+
+export const LazyImage = ({ src, alt, className = '', skeletonHeight = '200px', ...props }) => {
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [shouldLoad, setShouldLoad] = useState(false);
+    const imageRef = useRef(null);
+
+    useEffect(() => {
+        if (typeof IntersectionObserver === 'undefined') {
+            setShouldLoad(true);
+            return;
+        }
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setShouldLoad(true);
+                    observer.disconnect();
+                }
+            },
+            { rootMargin: '100px' } // Start loading 100px before image enters viewport
+        );
+
+        if (imageRef.current) {
+            observer.observe(imageRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, []);
+
+    return (
+        <div ref={imageRef} className={`lazy-image-wrapper ${className}`} style={{ position: 'relative', overflow: 'hidden' }}>
+            {!isLoaded && (
+                <Skeleton variant="rect" width="100%" height={skeletonHeight} />
+            )}
+            {shouldLoad && (
+                <img
+                    src={src}
+                    alt={alt}
+                    onLoad={() => setIsLoaded(true)}
+                    style={{
+                        display: isLoaded ? 'block' : 'none',
+                        width: '100%',
+                        height: 'auto',
+                        opacity: isLoaded ? 1 : 0,
+                        transition: 'opacity 0.35s ease-in-out',
+                    }}
+                    {...props}
+                />
+            )}
+        </div>
+    );
+};
+```
+
+### J. List Virtualization (Windowing for Large Datasets)
+When rendering lists or grids containing thousands of items, standard loops create massive DOM footprints. This leads to slow scroll speeds, high memory overhead, and severe input lag. 
+
+**List Virtualization (Windowing)** solves this by rendering *only* the rows currently visible inside the viewport box, swapping them out dynamically on scroll.
+
+#### 1. When to use List Virtualization
+* Lists, grids, or dropdown select components containing **more than 500-1,000 items**.
+* Infinite scrolling feeds or heavy database log views.
+
+#### 2. Reusable Virtualized List Wrapper (`client/src/features/shared/components/VirtualizedList.jsx`)
+Configure virtualization utilizing standard utilities like `react-window`:
+```javascript
+import React from 'react';
+import { FixedSizeList as List } from 'react-window';
+import { EmptyState } from './EmptyState';
+
+export const VirtualizedList = ({ 
+    items = [], 
+    itemHeight = 50, 
+    height = 400, 
+    renderRow 
+}) => {
+    if (items.length === 0) {
+        return <EmptyState title="No items to display" />;
+    }
+
+    // Inside react-window, the row renderer receives style which must be applied directly to ensure positioning
+    const RowWrapper = ({ index, style }) => {
+        return (
+            <div style={style}>
+                {renderRow(items[index], index)}
+            </div>
+        );
+    };
+
+    return (
+        <List
+            height={height}
+            itemCount={items.length}
+            itemSize={itemHeight}
+            width="100%"
+            className="virtual-scroll-viewport"
+        >
+            {RowWrapper}
+        </List>
+    );
+};
+```
+
+#### 3. Wiring Virtualized Lists in Features
+```javascript
+import React from 'react';
+import { VirtualizedList } from '../../shared/components/VirtualizedList';
+import { use[ResourceName] } from '../hooks/use[ResourceName]';
+
+export const LargeDirectoryView = () => {
+    const { dataList } = use[ResourceName](); // e.g. 5,000 parsed items
+
+    const renderCard = (item, index) => (
+        <div className="directory-row-item" style={{ height: '48px', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center' }}>
+            <span>{index + 1}. <strong>{item.name}</strong> ({item.email})</span>
+        </div>
+    );
+
+    return (
+        <div className="directory-wrapper">
+            <h2>System Directory</h2>
+            <VirtualizedList
+                items={dataList}
+                itemHeight={50}
+                height={500}
+                renderRow={renderCard}
+            />
+        </div>
+    );
+};
 ```
 
 ---
