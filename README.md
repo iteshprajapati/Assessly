@@ -33,7 +33,7 @@ A modern, production-grade online quiz and exam platform built with React, Expre
 ## Project Structure
 
 ```
-Quiz-System-MERN/
+Assessly/
 ├── server/
 │   ├── src/
 │   │   ├── config/
