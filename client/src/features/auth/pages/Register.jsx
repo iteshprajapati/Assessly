@@ -213,14 +213,14 @@ export default function Register() {
         <div className="register-header">
           <img 
             src="/logo.png" 
-            alt="QuizFlow Logo" 
+            alt="Assessly Logo" 
             className="register-logo"
           />
           <h1 className="register-title">
             Create Account
           </h1>
           <p className="register-subtitle">
-            Join QuizFlow as a Teacher or Student
+            Join Assessly as a Teacher or Student
           </p>
         </div>
 

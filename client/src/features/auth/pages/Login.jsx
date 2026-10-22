@@ -56,14 +56,14 @@ export default function Login() {
         <div className="login-header">
           <img 
             src="/logo.png" 
-            alt="QuizFlow Logo" 
+            alt="Assessly Logo" 
             className="login-logo"
           />
           <h1 className="login-title">
             Welcome back
           </h1>
           <p className="login-subtitle">
-            Sign in to your QuizFlow account
+            Sign in to your Assessly account
           </p>
         </div>
 

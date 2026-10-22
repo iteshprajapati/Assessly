@@ -30,8 +30,8 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="container d-flex justify-content-between align-items-center">
         <Link to="/" className="d-flex align-items-center gap-2" style={{ textDecoration: 'none' }}>
-          <img src="/logo.png" alt="QuizFlow Logo" className="navbar-logo" />
-          <span className="brand-name">QuizFlow</span>
+          <img src="/logo.png" alt="Assessly Logo" className="navbar-logo" />
+          <span className="brand-name">Assessly</span>
         </Link>
 
         <div className="d-flex gap-2">

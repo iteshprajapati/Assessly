@@ -12,7 +12,7 @@ export default function Footer() {
     }}>
       <div className="container text-center">
         <p style={{ margin: '0.5rem 0', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-          &copy; {currentYear} QuizFlow. All rights reserved.
+          &copy; {currentYear} Assessly. All rights reserved.
         </p>
         <p style={{ margin: '0.5rem 0', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
           A modern online quiz and exam platform
