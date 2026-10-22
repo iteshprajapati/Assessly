@@ -1,0 +1,134 @@
+@import '../../shared/styles/variables';
+
+.register-main {
+  flex: 1;
+  background: #fff;
+  @include flex-center;
+  min-height: calc(100vh - 64px);
+}
+
+.register-header {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.register-logo {
+  width: 100px;
+  height: auto;
+  margin: 0 auto 1.25rem;
+  display: block;
+  border-radius: 12px;
+}
+
+.register-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+.register-subtitle {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.register-form-group {
+  margin-bottom: 1.1rem;
+
+  &.role-group {
+    margin-bottom: 1.5rem;
+  }
+}
+
+.register-label {
+  @include form-label-base;
+  font-size: 0.85rem;
+  margin-bottom: 0.45rem;
+}
+
+.register-input {
+  @include form-input-base;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.register-input-password {
+  @include form-input-base;
+  padding: 0.75rem 2.8rem 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.register-password-wrapper {
+  position: relative;
+}
+
+.register-eye-button {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  color: #9ca3af;
+}
+
+.register-password-hint {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 0.4rem;
+  margin-bottom: 0;
+}
+
+.register-submit-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #374151;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  @include flex-center;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background-color: #4b5563;
+  }
+
+  &:disabled {
+    background-color: #1f2937 !important;
+    cursor: not-allowed;
+  }
+}
+
+.register-divider {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 1.5rem 0;
+}
+
+.register-footer-text {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.register-login-link {
+  color: #111827;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.register-otp-wrapper {
+  margin-bottom: 1.2rem;
+}

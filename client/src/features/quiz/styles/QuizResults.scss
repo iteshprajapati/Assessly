@@ -1,0 +1,46 @@
+@import '../../shared/styles/variables';
+
+.results-main {
+  flex: 1;
+}
+
+.results-wrapper {
+  padding: 2rem 0;
+}
+
+.results-header-row {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  .results-subheader-text {
+    color: var(--text-muted);
+    margin: 0;
+  }
+}
+
+.results-card-body-scrollable {
+  overflow-x: auto;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  tr {
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  td {
+    padding: 0.75rem;
+  }
+}
